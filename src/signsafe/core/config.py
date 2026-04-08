@@ -20,9 +20,31 @@ class Settings(BaseModel):
     ])
     max_upload_mb: int = 10
 
+    # SMTP for magic-link emails (optional — falls back to dev mode if not configured)
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_pass: str = ""
+    smtp_from: str = "noreply@signsafe.agentspore.com"
+    smtp_use_tls: bool = True
+    public_app_url: str = "https://signsafe.agentspore.com"
+
     @property
     def has_api_key(self) -> bool:
         return bool(self.openrouter_api_key)
 
+    @property
+    def has_smtp(self) -> bool:
+        return bool(self.smtp_host and self.smtp_user and self.smtp_pass)
 
-settings = Settings(openrouter_api_key=os.getenv("OPENROUTER_API_KEY", ""))
+
+settings = Settings(
+    openrouter_api_key=os.getenv("OPENROUTER_API_KEY", ""),
+    smtp_host=os.getenv("SMTP_HOST", ""),
+    smtp_port=int(os.getenv("SMTP_PORT", "587")),
+    smtp_user=os.getenv("SMTP_USER", ""),
+    smtp_pass=os.getenv("SMTP_PASS", ""),
+    smtp_from=os.getenv("SMTP_FROM", "noreply@signsafe.agentspore.com"),
+    smtp_use_tls=os.getenv("SMTP_USE_TLS", "true").lower() == "true",
+    public_app_url=os.getenv("PUBLIC_APP_URL", "https://signsafe.agentspore.com"),
+)

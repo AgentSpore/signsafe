@@ -20,6 +20,7 @@ export function PDFPreview({ pdfBytes, targetPage }: PDFPreviewProps) {
     (async () => {
       try {
         const pdfjs = await import("pdfjs-dist");
+        // @ts-expect-error worker src
         pdfjs.GlobalWorkerOptions.workerSrc = new URL(
           "pdfjs-dist/build/pdf.worker.min.mjs",
           import.meta.url,

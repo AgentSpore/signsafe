@@ -11,6 +11,7 @@ import { ExportButton } from "./export-button";
 import { PDFPreview } from "./pdf-preview";
 import { LocaleSwitcher } from "./locale-switcher";
 import { useLocale } from "./locale-provider";
+import { SiteFooter } from "./site-footer";
 import { translateAnalysis } from "@/lib/translate";
 import { useEffect, useState as useStateInner } from "react";
 
@@ -208,6 +209,7 @@ export function AnalysisView({
           </aside>
         </div>
       </div>
+      <SiteFooter />
     </main>
   );
 }

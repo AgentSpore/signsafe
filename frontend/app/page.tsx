@@ -9,6 +9,7 @@ import { IndustrySelector } from "@/components/industry-selector";
 import { DemoButton } from "@/components/demo-button";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { useLocale } from "@/components/locale-provider";
+import { SiteFooter } from "@/components/site-footer";
 import type { Industry } from "@/lib/industry";
 
 export default function HomePage() {
@@ -283,19 +284,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="border-t border-[var(--color-divider)]">
-        <div className="max-w-[1400px] mx-auto px-8 py-12 flex flex-col md:flex-row justify-between items-start gap-6">
-          <div>
-            <div className="font-display text-2xl mb-2">SignSafe</div>
-            <div className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)]">
-              LEASE FORENSICS · 2026 · STATELESS
-            </div>
-          </div>
-          <div className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)] max-w-md text-right">
-            EDUCATIONAL TOOL · NOT LEGAL ADVICE · CONSULT A LICENSED ATTORNEY FOR CRITICAL DECISIONS
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

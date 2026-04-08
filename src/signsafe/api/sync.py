@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from signsafe.core.config import settings
 from signsafe.core.deps import get_sync_service
 from signsafe.schemas.sync import (
     ConsumeTokenRequest,
@@ -14,7 +15,10 @@ from signsafe.schemas.sync import (
     SyncGetRequest,
     SyncPutRequest,
 )
+from signsafe.services.email_service import EmailService
 from signsafe.services.sync_service import SyncService, verify_session
+
+_email_service = EmailService()
 
 router = APIRouter(prefix="/sync", tags=["sync"])
 
@@ -25,7 +29,11 @@ async def request_magic_link(
     service: SyncService = Depends(get_sync_service),
 ) -> MagicLinkResponse:
     token = await service.create_magic_token(req.email)
-    # In production, send token via email. In dev, return it directly so UX can test.
+    if settings.has_smtp:
+        sent = await _email_service.send_magic_link(req.email, token)
+        if sent:
+            return MagicLinkResponse(token="", dev_mode=False)
+    # SMTP not configured or send failed → dev mode (return token directly)
     return MagicLinkResponse(token=token, dev_mode=True)
 
 

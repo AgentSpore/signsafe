@@ -30,7 +30,9 @@ export function clearSession(): void {
   localStorage.removeItem(KEY_SESSION);
 }
 
-export async function requestMagicLink(email: string): Promise<{ token: string }> {
+export async function requestMagicLink(
+  email: string,
+): Promise<{ token: string; dev_mode: boolean }> {
   const res = await fetch("/api/sync/magic-link", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

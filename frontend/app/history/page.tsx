@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { deleteAnalysis, clearAllHistory, loadHistory, type HistoryEntry } from "@/lib/storage";
 import { SyncPanel } from "@/components/sync-panel";
+import { SiteFooter } from "@/components/site-footer";
 
 export default function HistoryPage() {
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
@@ -122,6 +123,7 @@ export default function HistoryPage() {
           ))}
         </div>
       </div>
+      <SiteFooter />
     </main>
   );
 }

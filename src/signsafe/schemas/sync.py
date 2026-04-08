@@ -10,8 +10,8 @@ class MagicLinkRequest(BaseModel):
 
 
 class MagicLinkResponse(BaseModel):
-    token: str
-    # In dev mode, returned directly. In prod, sent via email.
+    # In dev mode, token is returned directly. In prod, empty (sent via email).
+    token: str = ""
     dev_mode: bool = True
 
 

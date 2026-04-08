@@ -46,8 +46,13 @@ export function SyncPanel({ onSynced }: { onSynced?: () => void } = {}) {
     setBusy(true);
     setError(null);
     try {
-      const { token: devTok } = await requestMagicLink(email);
-      setDevToken(devTok); // dev mode — shown directly
+      const res = await requestMagicLink(email);
+      if (res.dev_mode && res.token) {
+        setDevToken(res.token); // dev mode — token shown in UI
+      } else {
+        setDevToken(null); // prod mode — email sent, wait for user to paste token from email
+        setStatus("Magic link sent — check your email");
+      }
       setStep("token");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed");
