@@ -64,6 +64,10 @@ async def analyze(
                     "num_pages": extracted.num_pages,
                     "industry": industry,
                     "used_ocr": extracted.used_ocr,
+                    "extracted_pages": [
+                        {"page_number": p.page_number, "text": p.text}
+                        for p in extracted.pages
+                    ],
                     **analysis.model_dump(),
                 },
             })

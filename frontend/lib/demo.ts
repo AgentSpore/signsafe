@@ -6,6 +6,32 @@ export const DEMO_ANALYSIS: AnalysisData = {
   num_pages: 12,
   industry: "retail",
   used_ocr: false,
+  extracted_pages: [
+    {
+      page_number: 1,
+      text: "COMMERCIAL RETAIL LEASE AGREEMENT\n\nThis Lease is made between Landlord and Tenant for premises located at 100 Main Street. Term: five (5) years commencing 2026-05-01. Base rent: $4,500 per month with annual increase of 5% each year.",
+    },
+    {
+      page_number: 3,
+      text: "PERSONAL GUARANTEE. Tenant's officers personally guarantee all obligations under this Lease without limitation, jointly and severally. Spousal consent required.",
+    },
+    {
+      page_number: 5,
+      text: "COMMON AREA MAINTENANCE. Tenant shall pay its pro rata share of all common area maintenance, operating expenses, capital improvements, and management fees without limitation. Landlord's determination shall be final.",
+    },
+    {
+      page_number: 7,
+      text: "HOLDOVER. If Tenant remains after lease end, rent shall be 200% of base rent plus all consequential damages including lost profits.",
+    },
+    {
+      page_number: 9,
+      text: "EARLY TERMINATION. Landlord may terminate this Lease at Landlord's convenience with 60 days notice. Upon any default, all remaining rent for the full term shall be immediately due and payable.",
+    },
+    {
+      page_number: 10,
+      text: "MAINTENANCE. Tenant is responsible for all repairs including structural, roof, HVAC replacement, and ADA compliance.",
+    },
+  ],
   overall_risk_score: 82,
   recommendation: "NEGOTIATE_FIRST",
   summary:

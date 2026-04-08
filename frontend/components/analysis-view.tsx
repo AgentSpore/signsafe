@@ -9,6 +9,7 @@ import { ShareButton } from "./share-button";
 import { NegotiationPanel } from "./negotiation-panel";
 import { ExportButton } from "./export-button";
 import { PDFPreview } from "./pdf-preview";
+import { TranslatedSource } from "./translated-source";
 import { LocaleSwitcher } from "./locale-switcher";
 import { useLocale } from "./locale-provider";
 import { SiteFooter } from "./site-footer";
@@ -79,6 +80,9 @@ export function AnalysisView({
           <div className="mb-6">
             <PDFPreview pdfBytes={pdfBytes} targetPage={jumpPage} />
           </div>
+        )}
+        {locale !== "en" && displayData.extracted_pages && displayData.extracted_pages.length > 0 && (
+          <TranslatedSource pages={displayData.extracted_pages} />
         )}
         <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
           <section className="lg:col-span-6 space-y-6">

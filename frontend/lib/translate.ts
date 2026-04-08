@@ -60,16 +60,22 @@ export async function translateAnalysis(
   }
 
   // Flatten all translatable strings, keeping track of shape so we can reassemble.
+  // We translate EVERYTHING including original_text quotes AND the full extracted
+  // document pages — users want to read the contract in their language.
   const strings: string[] = [];
   strings.push(data.summary);
   data.top_3_concerns.forEach((c) => strings.push(c));
   data.risk_clauses.forEach((c) => {
     strings.push(c.title);
+    strings.push(c.original_text);
     strings.push(c.plain_english);
     strings.push(c.why_risky);
     strings.push(c.negotiation_counter);
     strings.push(c.benchmark || "");
   });
+  // Translate full document pages too (when available)
+  const pages = data.extracted_pages || [];
+  pages.forEach((p) => strings.push(p.text || ""));
 
   const translated = await apiTranslate(strings, locale);
   let idx = 0;
@@ -78,10 +84,15 @@ export async function translateAnalysis(
   const risk_clauses: RiskClause[] = data.risk_clauses.map((c) => ({
     ...c,
     title: translated[idx++],
+    original_text: translated[idx++],
     plain_english: translated[idx++],
     why_risky: translated[idx++],
     negotiation_counter: translated[idx++],
     benchmark: translated[idx++] || null,
+  }));
+  const extracted_pages = pages.map((p) => ({
+    page_number: p.page_number,
+    text: translated[idx++] || p.text,
   }));
 
   const result: AnalysisData = {
@@ -89,6 +100,7 @@ export async function translateAnalysis(
     summary,
     top_3_concerns,
     risk_clauses,
+    extracted_pages,
   };
 
   if (typeof window !== "undefined" && docId) {

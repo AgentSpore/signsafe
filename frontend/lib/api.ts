@@ -29,11 +29,17 @@ export interface RiskClause {
 
 export type Recommendation = "SAFE_TO_SIGN" | "NEGOTIATE_FIRST" | "WALK_AWAY";
 
+export interface ExtractedPage {
+  page_number: number;
+  text: string;
+}
+
 export interface AnalysisData {
   filename: string;
   num_pages: number;
   industry?: string | null;
   used_ocr?: boolean;
+  extracted_pages?: ExtractedPage[];
   overall_risk_score: number;
   recommendation: Recommendation;
   summary: string;
