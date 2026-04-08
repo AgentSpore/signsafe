@@ -86,8 +86,8 @@ export function AnalysisView({
             <span className="font-mono text-sm tracking-widest uppercase">SignSafe</span>
           </Link>
           <div className="flex items-center gap-6 font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)]">
-            {readOnly && <span className="text-[var(--color-accent-electric)]">SHARED · READ-ONLY</span>}
-            {!readOnly && <Link href="/history" className="hover:text-[var(--color-ink-primary)]">HISTORY</Link>}
+            {readOnly && <span className="text-[var(--color-accent-electric)]">{t("shared.readOnly")}</span>}
+            {!readOnly && <Link href="/history" className="hover:text-[var(--color-ink-primary)]">{t("nav.history").toUpperCase()}</Link>}
           </div>
         </div>
       </header>
@@ -100,7 +100,7 @@ export function AnalysisView({
               onClick={() => setShowPreview((v) => !v)}
               className="font-mono text-[10px] tracking-widest uppercase border border-[var(--color-divider)] px-4 py-2 hover:bg-[var(--color-bg-surface)]"
             >
-              {showPreview ? "✕ HIDE PREVIEW" : "⧉ SHOW PDF PREVIEW"}
+              {showPreview ? t("analysis.hidePreview") : t("analysis.showPreview")}
             </button>
           </div>
         )}
@@ -116,7 +116,7 @@ export function AnalysisView({
           <section className="lg:col-span-6 space-y-6">
             <div className="border border-[var(--color-divider)] bg-[var(--color-bg-surface)] p-8">
               <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-2">
-                UNDER REVIEW
+                {t("analysis.underReview")}
               </div>
               <h1 className="font-display text-4xl md:text-5xl leading-tight break-words">
                 {displayData.filename}
@@ -132,7 +132,7 @@ export function AnalysisView({
               <div className="border border-[var(--color-divider)] bg-[var(--color-bg-surface)] p-8">
                 <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-3">
                   ─── {t("analysis.summary")} ───
-                  {translating && <span className="ml-2 text-[var(--color-accent-electric)]">· TRANSLATING...</span>}
+                  {translating && <span className="ml-2 text-[var(--color-accent-electric)]">· {t("analysis.translating")}</span>}
                 </div>
                 <p className="font-body text-lg leading-relaxed whitespace-pre-wrap text-[var(--color-ink-primary)]">
                   {displayData.summary}
@@ -145,6 +145,7 @@ export function AnalysisView({
                 <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-3">
                   ─── {t("analysis.top3")} ───
                 </div>
+                <p className="sr-only">{/* locale-aware */}</p>
                 <ol className="space-y-3 font-body">
                   {displayData.top_3_concerns.map((concern, i) => (
                     <li key={i} className="flex gap-4">
@@ -165,7 +166,7 @@ export function AnalysisView({
               <div className="space-y-4">
                 {sorted.length === 0 && (
                   <p className="font-body text-[var(--color-ink-secondary)]">
-                    No predatory clauses detected.
+                    {t("analysis.noClauses")}
                   </p>
                 )}
                 {sorted.map((c, i) => (
@@ -201,7 +202,7 @@ export function AnalysisView({
                     title="Force re-translate (clears cache)"
                     className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)] hover:text-[var(--color-accent-signal)] border border-[var(--color-divider)] px-3 py-1.5 disabled:opacity-50"
                   >
-                    {translating ? "..." : "⟳ RETRY"}
+                    {translating ? "..." : t("analysis.retry")}
                   </button>
                 )}
                 <LocaleSwitcher />
@@ -210,12 +211,16 @@ export function AnalysisView({
 
               <div className="border border-[var(--color-divider)] bg-[var(--color-bg-surface)] p-6">
                 <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-3">
-                  CLAUSE BREAKDOWN
+                  {t("analysis.breakdown")}
                 </div>
                 {[5, 4, 3, 2, 1].map((lvl) => {
                   const count = displayData.risk_clauses.filter((c) => c.severity === lvl).length;
                   const labels: Record<number, string> = {
-                    5: "DEAL-BREAKER", 4: "CRITICAL", 3: "WARNING", 2: "CAUTION", 1: "INFO",
+                    5: t("scale.dealBreaker"),
+                    4: t("scale.critical"),
+                    3: t("scale.warning"),
+                    2: t("scale.caution"),
+                    1: t("scale.info"),
                   };
                   const colors: Record<number, string> = {
                     5: "var(--color-risk-deal-breaker)",
@@ -246,7 +251,7 @@ export function AnalysisView({
                 href="/"
                 className="block text-center border border-[var(--color-divider)] px-6 py-4 font-mono text-xs tracking-widest uppercase text-[var(--color-ink-secondary)] hover:bg-[var(--color-bg-surface)] hover:text-[var(--color-ink-primary)] transition"
               >
-                ← ANALYZE ANOTHER LEASE
+                {t("analysis.another")}
               </Link>
             </div>
           </aside>

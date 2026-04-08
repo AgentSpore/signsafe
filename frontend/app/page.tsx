@@ -77,65 +77,64 @@ export default function HomePage() {
           <aside className="col-span-12 md:col-span-3 space-y-8 reveal-up">
             <div>
               <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)]">
-                LEASE FORENSICS
+                {t("hero.meta.label")}
               </div>
               <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)]">
-                VOL. 01 / 2026
+                {t("hero.meta.vol")}
               </div>
             </div>
             <div className="h-px bg-[var(--color-divider)]" />
             <div className="font-mono text-[10px] tracking-[0.15em] uppercase text-[var(--color-ink-secondary)] leading-relaxed">
-              FOR<br />
-              FIRST-TIME<br />
-              COMMERCIAL<br />
-              TENANTS
+              {t("hero.meta.for")}
             </div>
             <div className="h-px bg-[var(--color-divider)]" />
             <div className="space-y-2">
-              <div className="font-mono text-[10px] tracking-widest text-[var(--color-ink-tertiary)]">STATS</div>
+              <div className="font-mono text-[10px] tracking-widest text-[var(--color-ink-tertiary)]">
+                {t("hero.stats.label")}
+              </div>
               <div className="font-display text-4xl">40</div>
               <div className="font-mono text-[10px] text-[var(--color-ink-secondary)]">
-                PREDATORY PATTERNS<br />DETECTED
+                {t("hero.stats.body")}
               </div>
             </div>
             <div className="h-px bg-[var(--color-divider)]" />
             <div className="space-y-2">
-              <div className="font-mono text-[10px] tracking-widest text-[var(--color-ink-tertiary)]">PRIVACY</div>
+              <div className="font-mono text-[10px] tracking-widest text-[var(--color-ink-tertiary)]">
+                {t("hero.privacy.label")}
+              </div>
               <div className="font-body text-xs text-[var(--color-ink-secondary)] leading-relaxed">
-                Stateless. Your PDF is analyzed in memory and discarded. Results stored only in your browser.
+                {t("hero.privacy.body")}
               </div>
             </div>
           </aside>
 
           <div className="col-span-12 md:col-span-9">
             <h1 className="font-display font-normal text-[clamp(3.5rem,10vw,8.5rem)] leading-[0.88] tracking-[-0.035em] reveal-up">
-              FIRST LEASE?<br />
-              <span className="italic text-[var(--color-accent-signal)]">DON&rsquo;T</span>{" "}
-              SIGN<br />
-              BLIND.
+              {t("hero.heading.line1")}<br />
+              <span className="italic text-[var(--color-accent-signal)]">{t("hero.heading.dont")}</span>{" "}
+              {t("hero.heading.line2")}<br />
+              {t("hero.heading.line3")}
             </h1>
 
             <div className="mt-12 grid grid-cols-12 gap-8">
               <p className="col-span-12 md:col-span-7 font-body text-xl md:text-2xl leading-relaxed text-[var(--color-ink-secondary)] reveal-up">
-                Commercial leases hide <span className="text-[var(--color-ink-primary)]">$40K traps</span>{" "}
-                in 80-page boilerplate. Unlimited guarantees, holdover double-rent,
-                relocation clauses that move you into a closet. We find them in{" "}
+                {t("hero.lead")}{" "}
                 <span className="text-[var(--color-accent-signal)] font-mono text-base align-middle">
-                  ≈3 MIN
+                  {t("hero.lead.time")}
                 </span>
                 .
               </p>
 
               <div className="col-span-12 md:col-span-5 md:border-l md:border-[var(--color-divider)] md:pl-8 space-y-4 reveal-up">
                 <div className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)]">
-                  WHAT WE FIND
+                  {t("hero.whatWeFind")}
                 </div>
                 <ul className="space-y-2 font-body text-sm">
-                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-critical)]">●</span>Unlimited personal guarantees</li>
-                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-critical)]">●</span>200% holdover penalties</li>
-                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-warning)]">●</span>Uncapped CAM pass-through</li>
-                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-warning)]">●</span>Rent acceleration on default</li>
-                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-caution)]">●</span>Auto-renewal traps</li>
+                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-critical)]">●</span>{t("hero.find.guarantees")}</li>
+                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-critical)]">●</span>{t("hero.find.holdover")}</li>
+                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-warning)]">●</span>{t("hero.find.cam")}</li>
+                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-warning)]">●</span>{t("hero.find.acceleration")}</li>
+                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-caution)]">●</span>{t("hero.find.autoRenewal")}</li>
                 </ul>
               </div>
             </div>
@@ -164,13 +163,13 @@ export default function HomePage() {
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
                     <div>
                       <div className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)] mb-2">
-                        STEP 02 / UPLOAD
+                        {t("upload.step")}
                       </div>
                       <div className="font-display text-3xl md:text-4xl">
-                        Drop your lease PDF.
+                        {t("upload.drop")}
                       </div>
                       <div className="font-body text-[var(--color-ink-secondary)] mt-2">
-                        Up to 10MB · processed in memory · never stored on server.
+                        {t("upload.limits")}
                       </div>
                     </div>
                     <button
@@ -178,16 +177,16 @@ export default function HomePage() {
                       onClick={() => inputRef.current?.click()}
                       className="bg-[var(--color-accent-signal)] text-[var(--color-bg-base)] px-8 py-5 font-mono text-sm tracking-widest uppercase font-semibold hover:bg-[var(--color-ink-primary)] transition-colors"
                     >
-                      SELECT FILE →
+                      {t("upload.select")}
                     </button>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     <div className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)]">
-                      STAGE · {stage.toUpperCase()}
+                      {t("upload.stage")} · {stage.toUpperCase()}
                     </div>
                     <div className="font-display text-3xl md:text-4xl">
-                      {stage === "analyzing" ? "Running forensics…" : stage === "extracting" ? "Reading your PDF…" : "Uploading…"}
+                      {stage === "analyzing" ? t("upload.analyzing") : stage === "extracting" ? t("upload.extracting") : t("upload.uploading")}
                     </div>
                     <div className="h-[3px] bg-[var(--color-bg-elevated)]">
                       <div
@@ -229,21 +228,21 @@ export default function HomePage() {
       <section id="how" className="relative border-t border-[var(--color-divider)]">
         <div className="max-w-[1400px] mx-auto px-8 py-24">
           <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-4">
-            § 02 / HOW IT WORKS
+            {t("how.section")}
           </div>
           <h2 className="font-display text-5xl md:text-7xl leading-[0.9] mb-16 max-w-3xl">
-            Three steps. Zero data retention. One clear verdict.
+            {t("how.title")}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--color-divider)]">
             {[
-              { num: "01", title: "Extract", body: "PyMuPDF parses every page. Your file lives in RAM for seconds, then is discarded." },
-              { num: "02", title: "Forensics", body: "Free open-source LLMs cross-reference 40 predatory patterns against your exact text." },
-              { num: "03", title: "Verdict", body: "Risk score, recommendation, counter-language. Saved to your browser only." },
+              { num: "01", title: t("how.extract"), body: t("how.extractBody") },
+              { num: "02", title: t("how.forensics"), body: t("how.forensicsBody") },
+              { num: "03", title: t("how.verdict"), body: t("how.verdictBody") },
             ].map((s) => (
               <div key={s.num} className="bg-[var(--color-bg-base)] p-10">
                 <div className="font-display text-7xl text-[var(--color-accent-electric)] mb-6">{s.num}</div>
-                <div className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)] mb-2">STAGE</div>
+                <div className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)] mb-2">{t("how.stage")}</div>
                 <div className="font-display text-3xl mb-4">{s.title}</div>
                 <div className="font-body text-[var(--color-ink-secondary)] leading-relaxed">{s.body}</div>
               </div>
@@ -255,19 +254,19 @@ export default function HomePage() {
       <section id="patterns" className="relative border-t border-[var(--color-divider)]">
         <div className="max-w-[1400px] mx-auto px-8 py-24">
           <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-4">
-            § 03 / SEVERITY SCALE
+            {t("scale.section")}
           </div>
           <h2 className="font-display text-5xl md:text-7xl leading-[0.9] mb-16 max-w-3xl">
-            We don&rsquo;t sugarcoat. <span className="italic">Red means red.</span>
+            {t("scale.title")}
           </h2>
 
           <div className="space-y-0 border-t border-[var(--color-divider)]">
             {[
-              { level: 1, label: "INFO", color: "var(--color-ink-tertiary)", desc: "Informational — standard clause, no action needed." },
-              { level: 2, label: "CAUTION", color: "var(--color-risk-caution)", desc: "Worth discussing — minor friction, usually fixable." },
-              { level: 3, label: "WARNING", color: "var(--color-risk-warning)", desc: "Meaningful risk — negotiate before signing." },
-              { level: 4, label: "CRITICAL", color: "var(--color-risk-critical)", desc: "Red flag — refuse without amendment." },
-              { level: 5, label: "DEAL-BREAKER", color: "var(--color-risk-deal-breaker)", desc: "Do not sign as-is. Walk away if landlord won't budge." },
+              { level: 1, label: t("scale.info"), color: "var(--color-ink-tertiary)", desc: t("scale.info.desc") },
+              { level: 2, label: t("scale.caution"), color: "var(--color-risk-caution)", desc: t("scale.caution.desc") },
+              { level: 3, label: t("scale.warning"), color: "var(--color-risk-warning)", desc: t("scale.warning.desc") },
+              { level: 4, label: t("scale.critical"), color: "var(--color-risk-critical)", desc: t("scale.critical.desc") },
+              { level: 5, label: t("scale.dealBreaker"), color: "var(--color-risk-deal-breaker)", desc: t("scale.dealBreaker.desc") },
             ].map((r) => (
               <div key={r.level} className="grid grid-cols-12 gap-4 border-b border-[var(--color-divider)] py-6 items-center">
                 <div className="col-span-2 md:col-span-1 font-mono text-xs text-[var(--color-ink-tertiary)]">0{r.level}</div>

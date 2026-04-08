@@ -5,8 +5,11 @@ import { useEffect, useState } from "react";
 import { deleteAnalysis, clearAllHistory, loadHistory, type HistoryEntry } from "@/lib/storage";
 import { SyncPanel } from "@/components/sync-panel";
 import { SiteFooter } from "@/components/site-footer";
+import { LocaleSwitcher } from "@/components/locale-switcher";
+import { useLocale } from "@/components/locale-provider";
 
 export default function HistoryPage() {
+  const { t } = useLocale();
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
 
   const refresh = () => setEntries(loadHistory());
@@ -32,6 +35,11 @@ export default function HistoryPage() {
     NEGOTIATE_FIRST: "var(--color-risk-warning)",
     WALK_AWAY: "var(--color-risk-deal-breaker)",
   };
+  const recLabels: Record<string, string> = {
+    SAFE_TO_SIGN: t("rec.safe"),
+    NEGOTIATE_FIRST: t("rec.negotiate"),
+    WALK_AWAY: t("rec.walkAway"),
+  };
 
   return (
     <main className="min-h-screen bg-[var(--color-bg-base)] text-[var(--color-ink-primary)]">
@@ -43,9 +51,12 @@ export default function HistoryPage() {
             <div className="w-8 h-8 border-2 border-[var(--color-ink-primary)] flex items-center justify-center font-mono text-xs font-bold">§</div>
             <span className="font-mono text-sm tracking-widest uppercase">SignSafe</span>
           </Link>
-          <Link href="/" className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)] hover:text-[var(--color-ink-primary)]">
-            ← NEW ANALYSIS
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)] hover:text-[var(--color-ink-primary)]">
+              {t("history.newAnalysis")}
+            </Link>
+            <LocaleSwitcher />
+          </div>
         </div>
       </header>
 
@@ -54,17 +65,17 @@ export default function HistoryPage() {
           <SyncPanel onSynced={refresh} />
         </div>
         <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-4">
-          § LOCAL HISTORY
+          {t("history.section")}
         </div>
         <div className="flex items-end justify-between mb-12">
-          <h1 className="font-display text-6xl md:text-7xl">Your archive.</h1>
+          <h1 className="font-display text-6xl md:text-7xl">{t("history.title")}</h1>
           {entries.length > 0 && (
             <button
               type="button"
               onClick={handleClear}
               className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-risk-critical)] border border-[var(--color-risk-critical)] px-4 py-2 hover:bg-[var(--color-risk-critical)] hover:text-[var(--color-bg-base)] transition"
             >
-              CLEAR ALL
+              {t("history.clearAll")}
             </button>
           )}
         </div>
@@ -72,16 +83,16 @@ export default function HistoryPage() {
         {entries.length === 0 && (
           <div className="border border-dashed border-[var(--color-divider)] p-16 text-center">
             <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-4">
-              EMPTY
+              {t("history.empty.label")}
             </div>
             <p className="font-body text-[var(--color-ink-secondary)] mb-6">
-              No analyses yet. Upload a lease to get started.
+              {t("history.empty.body")}
             </p>
             <Link
               href="/"
               className="inline-block bg-[var(--color-accent-signal)] text-[var(--color-bg-base)] px-6 py-3 font-mono text-xs tracking-widest uppercase font-semibold"
             >
-              UPLOAD LEASE →
+              {t("history.empty.cta")}
             </Link>
           </div>
         )}
@@ -102,14 +113,14 @@ export default function HistoryPage() {
                 </div>
               </div>
               <div className="col-span-3 font-mono text-[10px] tracking-widest uppercase" style={{ color: recColors[e.recommendation] }}>
-                → {e.recommendation.replace(/_/g, " ")}
+                → {recLabels[e.recommendation] || e.recommendation.replace(/_/g, " ")}
               </div>
               <div className="col-span-2 md:col-span-3 flex gap-2 justify-end">
                 <Link
                   href={`/analyze/${e.id}`}
                   className="font-mono text-[10px] tracking-widest uppercase border border-[var(--color-divider)] px-3 py-2 hover:bg-[var(--color-bg-base)]"
                 >
-                  OPEN
+                  {t("history.open")}
                 </Link>
                 <button
                   type="button"

@@ -1,14 +1,7 @@
 "use client";
 
 import type { RiskClause } from "@/lib/api";
-
-const SEVERITY_META: Record<number, { label: string; color: string; bar: string }> = {
-  1: { label: "INFO", color: "var(--color-ink-tertiary)", bar: "w-1/5" },
-  2: { label: "CAUTION", color: "var(--color-risk-caution)", bar: "w-2/5" },
-  3: { label: "WARNING", color: "var(--color-risk-warning)", bar: "w-3/5" },
-  4: { label: "CRITICAL", color: "var(--color-risk-critical)", bar: "w-4/5" },
-  5: { label: "DEAL-BREAKER", color: "var(--color-risk-deal-breaker)", bar: "w-full" },
-};
+import { useLocale } from "./locale-provider";
 
 export function ClauseCard({
   clause,
@@ -19,6 +12,14 @@ export function ClauseCard({
   index: number;
   onJumpToPage?: (page: number) => void;
 }) {
+  const { t } = useLocale();
+  const SEVERITY_META: Record<number, { label: string; color: string; bar: string }> = {
+    1: { label: t("scale.info"), color: "var(--color-ink-tertiary)", bar: "w-1/5" },
+    2: { label: t("scale.caution"), color: "var(--color-risk-caution)", bar: "w-2/5" },
+    3: { label: t("scale.warning"), color: "var(--color-risk-warning)", bar: "w-3/5" },
+    4: { label: t("scale.critical"), color: "var(--color-risk-critical)", bar: "w-4/5" },
+    5: { label: t("scale.dealBreaker"), color: "var(--color-risk-deal-breaker)", bar: "w-full" },
+  };
   const meta = SEVERITY_META[clause.severity];
   const isCritical = clause.severity >= 4;
 
@@ -41,7 +42,7 @@ export function ClauseCard({
           </h3>
         </div>
         <div className="font-mono text-[10px] text-[var(--color-ink-tertiary)] whitespace-nowrap">
-          {onJumpToPage ? "⇱ " : ""}PAGE {clause.page_number}
+          {onJumpToPage ? "⇱ " : ""}{t("analysis.page")} {clause.page_number}
         </div>
       </div>
 
@@ -68,7 +69,7 @@ export function ClauseCard({
       {/* Plain English */}
       <div className="mb-5">
         <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-2">
-          ─── IN PLAIN ENGLISH ───
+          ─── {t("clause.plainEnglish")} ───
         </div>
         <p className="font-body text-[var(--color-ink-primary)] leading-relaxed">
           {clause.plain_english}
@@ -78,7 +79,7 @@ export function ClauseCard({
       {/* Why risky */}
       <div className="mb-5">
         <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-2">
-          ─── WHY IT&rsquo;S RISKY ───
+          ─── {t("clause.whyRisky")} ───
         </div>
         <p className="font-body text-[var(--color-ink-secondary)] leading-relaxed">
           {clause.why_risky}
@@ -88,7 +89,7 @@ export function ClauseCard({
       {/* Counter */}
       <div className="border border-[var(--color-accent-signal)] p-4 bg-[var(--color-bg-base)]">
         <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-accent-signal)] mb-2">
-          ─── COUNTER LANGUAGE ───
+          ─── {t("clause.counter")} ───
         </div>
         <p className="font-body text-[var(--color-ink-primary)] leading-relaxed">
           {clause.negotiation_counter}
@@ -97,7 +98,7 @@ export function ClauseCard({
 
       {clause.benchmark && (
         <div className="mt-4 font-mono text-[10px] text-[var(--color-ink-tertiary)] uppercase tracking-wider">
-          BENCHMARK · {clause.benchmark}
+          {t("clause.benchmark")} · {clause.benchmark}
         </div>
       )}
     </article>

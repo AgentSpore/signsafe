@@ -2,27 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Recommendation } from "@/lib/api";
-
-const REC_META: Record<
-  Recommendation,
-  { label: string; color: string; body: string }
-> = {
-  SAFE_TO_SIGN: {
-    label: "SAFE TO SIGN",
-    color: "var(--color-accent-signal)",
-    body: "Clean enough. Review highlighted notes then proceed.",
-  },
-  NEGOTIATE_FIRST: {
-    label: "NEGOTIATE FIRST",
-    color: "var(--color-risk-warning)",
-    body: "Meaningful risks found. Push back with counter-language before signing.",
-  },
-  WALK_AWAY: {
-    label: "WALK AWAY",
-    color: "var(--color-risk-deal-breaker)",
-    body: "Deal-breakers present. Do not sign as-is.",
-  },
-};
+import { useLocale } from "./locale-provider";
 
 export function RiskScore({
   score,
@@ -31,7 +11,25 @@ export function RiskScore({
   score: number;
   recommendation: Recommendation;
 }) {
+  const { t } = useLocale();
   const [display, setDisplay] = useState(0);
+  const REC_META: Record<Recommendation, { label: string; color: string; body: string }> = {
+    SAFE_TO_SIGN: {
+      label: t("rec.safe"),
+      color: "var(--color-accent-signal)",
+      body: t("rec.safeBody"),
+    },
+    NEGOTIATE_FIRST: {
+      label: t("rec.negotiate"),
+      color: "var(--color-risk-warning)",
+      body: t("rec.negotiateBody"),
+    },
+    WALK_AWAY: {
+      label: t("rec.walkAway"),
+      color: "var(--color-risk-deal-breaker)",
+      body: t("rec.walkAwayBody"),
+    },
+  };
   const meta = REC_META[recommendation];
 
   useEffect(() => {
@@ -51,7 +49,7 @@ export function RiskScore({
   return (
     <div className="border border-[var(--color-divider)] p-8 bg-[var(--color-bg-surface)]">
       <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-3">
-        OVERALL RISK SCORE
+        {t("analysis.riskScore")}
       </div>
       <div className="flex items-baseline gap-3 mb-4">
         <div className="font-display text-8xl leading-none" style={{ color: meta.color }}>

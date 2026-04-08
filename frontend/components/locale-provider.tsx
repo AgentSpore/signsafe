@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { UI_EN, type Locale } from "@/lib/i18n";
+import { loadUIStrings } from "@/lib/translate";
 
 interface LocaleContextValue {
   locale: Locale;
@@ -19,26 +20,40 @@ const LocaleContext = createContext<LocaleContextValue>({
 
 const KEY = "signsafe:locale";
 
-// Note: UI labels stay in English regardless of locale.
-// Only analysis CONTENT is translated (via translateAnalysis on the analyze view).
-// This avoids parallel translate calls hitting LLM rate limits and keeps UI snappy.
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("en");
+  const [strings, setStrings] = useState<Record<string, string>>(UI_EN);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(KEY) as Locale | null;
     if (stored && stored !== "en") setLocaleState(stored);
   }, []);
 
+  useEffect(() => {
+    if (locale === "en") {
+      setStrings(UI_EN);
+      return;
+    }
+    setLoading(true);
+    loadUIStrings(locale)
+      .then(setStrings)
+      .catch((e) => {
+        console.error("UI translation failed", e);
+        setStrings(UI_EN);
+      })
+      .finally(() => setLoading(false));
+  }, [locale]);
+
   const setLocale = (l: Locale) => {
     localStorage.setItem(KEY, l);
     setLocaleState(l);
   };
 
-  const t = (key: string) => UI_EN[key] || key;
+  const t = (key: string) => strings[key] || UI_EN[key] || key;
 
   return (
-    <LocaleContext.Provider value={{ locale, setLocale, t, loading: false }}>
+    <LocaleContext.Provider value={{ locale, setLocale, t, loading }}>
       {children}
     </LocaleContext.Provider>
   );

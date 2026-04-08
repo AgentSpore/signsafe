@@ -11,10 +11,12 @@ import {
   saveSession,
   type SessionInfo,
 } from "@/lib/sync";
+import { useLocale } from "./locale-provider";
 
 type Step = "idle" | "email" | "token" | "linked";
 
 export function SyncPanel({ onSynced }: { onSynced?: () => void } = {}) {
+  const { t } = useLocale();
   const [step, setStep] = useState<Step>("idle");
   const [email, setEmail] = useState("");
   const [token, setToken] = useState("");
@@ -48,10 +50,10 @@ export function SyncPanel({ onSynced }: { onSynced?: () => void } = {}) {
     try {
       const res = await requestMagicLink(email);
       if (res.dev_mode && res.token) {
-        setDevToken(res.token); // dev mode — token shown in UI
+        setDevToken(res.token);
       } else {
-        setDevToken(null); // prod mode — email sent, wait for user to paste token from email
-        setStatus("Magic link sent — check your email");
+        setDevToken(null);
+        setStatus(t("sync.emailSent"));
       }
       setStep("token");
     } catch (e) {
@@ -110,7 +112,7 @@ export function SyncPanel({ onSynced }: { onSynced?: () => void } = {}) {
     return (
       <div className="border border-[var(--color-divider)] bg-[var(--color-bg-surface)] p-6 space-y-3">
         <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-accent-signal)]">
-          ✓ CLOUD SYNC ACTIVE
+          {t("sync.active")}
         </div>
         <div className="font-body text-sm text-[var(--color-ink-primary)] break-all">
           {session.email}
@@ -125,14 +127,14 @@ export function SyncPanel({ onSynced }: { onSynced?: () => void } = {}) {
             disabled={busy}
             className="flex-1 border border-[var(--color-divider)] py-2 font-mono text-[10px] tracking-widest uppercase hover:bg-[var(--color-bg-elevated)] disabled:opacity-50"
           >
-            {busy ? "..." : "⟳ SYNC NOW"}
+            {busy ? "..." : t("sync.now")}
           </button>
           <button
             type="button"
             onClick={handleSignOut}
             className="flex-1 border border-[var(--color-divider)] py-2 font-mono text-[10px] tracking-widest uppercase hover:border-[var(--color-risk-critical)] hover:text-[var(--color-risk-critical)]"
           >
-            SIGN OUT
+            {t("sync.signOut")}
           </button>
         </div>
       </div>
@@ -142,10 +144,10 @@ export function SyncPanel({ onSynced }: { onSynced?: () => void } = {}) {
   return (
     <div className="border border-[var(--color-divider)] bg-[var(--color-bg-surface)] p-6 space-y-4">
       <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)]">
-        ─── CLOUD SYNC (E2E ENCRYPTED) ───
+        {t("sync.title")}
       </div>
       <p className="font-body text-xs text-[var(--color-ink-secondary)] leading-relaxed">
-        Link your email to sync analyses across devices. Data is encrypted in your browser — we store only ciphertext.
+        {t("sync.intro")}
       </p>
 
       {step === "idle" && (
@@ -154,7 +156,7 @@ export function SyncPanel({ onSynced }: { onSynced?: () => void } = {}) {
           onClick={() => setStep("email")}
           className="w-full bg-[var(--color-accent-electric)] text-[var(--color-ink-primary)] py-3 font-mono text-[10px] tracking-widest uppercase font-semibold hover:bg-[var(--color-ink-primary)] hover:text-[var(--color-bg-base)]"
         >
-          ⧉ LINK EMAIL
+          {t("sync.linkEmail")}
         </button>
       )}
 
@@ -164,7 +166,7 @@ export function SyncPanel({ onSynced }: { onSynced?: () => void } = {}) {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
+            placeholder={t("sync.emailPlaceholder")}
             className="w-full bg-[var(--color-bg-base)] border border-[var(--color-divider)] px-3 py-2 font-body text-sm text-[var(--color-ink-primary)] focus:border-[var(--color-accent-signal)] outline-none"
           />
           <button
@@ -173,7 +175,7 @@ export function SyncPanel({ onSynced }: { onSynced?: () => void } = {}) {
             disabled={busy || !email.includes("@")}
             className="w-full bg-[var(--color-accent-signal)] text-[var(--color-bg-base)] py-2 font-mono text-[10px] tracking-widest uppercase font-semibold disabled:opacity-50"
           >
-            {busy ? "SENDING..." : "SEND MAGIC LINK →"}
+            {busy ? t("sync.sending") : t("sync.sendLink")}
           </button>
         </div>
       )}
@@ -183,7 +185,7 @@ export function SyncPanel({ onSynced }: { onSynced?: () => void } = {}) {
           {devToken && (
             <div className="border border-[var(--color-accent-electric)] p-3 space-y-2">
               <div className="font-mono text-[9px] tracking-widest uppercase text-[var(--color-accent-electric)]">
-                DEV MODE · TOKEN
+                {t("sync.devMode")}
               </div>
               <div className="font-mono text-[10px] break-all text-[var(--color-ink-primary)]">
                 {devToken}
@@ -193,7 +195,7 @@ export function SyncPanel({ onSynced }: { onSynced?: () => void } = {}) {
                 onClick={() => handleConsume(devToken)}
                 className="w-full bg-[var(--color-accent-signal)] text-[var(--color-bg-base)] py-2 font-mono text-[10px] tracking-widest uppercase font-semibold"
               >
-                USE THIS TOKEN →
+                {t("sync.useToken")}
               </button>
             </div>
           )}
@@ -201,7 +203,7 @@ export function SyncPanel({ onSynced }: { onSynced?: () => void } = {}) {
             type="text"
             value={token}
             onChange={(e) => setToken(e.target.value)}
-            placeholder="paste magic token..."
+            placeholder={t("sync.tokenPlaceholder")}
             className="w-full bg-[var(--color-bg-base)] border border-[var(--color-divider)] px-3 py-2 font-mono text-xs text-[var(--color-ink-primary)] focus:border-[var(--color-accent-signal)] outline-none"
           />
           <button
@@ -210,7 +212,7 @@ export function SyncPanel({ onSynced }: { onSynced?: () => void } = {}) {
             disabled={busy || !token}
             className="w-full border border-[var(--color-accent-signal)] text-[var(--color-accent-signal)] py-2 font-mono text-[10px] tracking-widest uppercase disabled:opacity-50"
           >
-            {busy ? "..." : "VERIFY TOKEN"}
+            {busy ? "..." : t("sync.verify")}
           </button>
         </div>
       )}

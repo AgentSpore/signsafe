@@ -1,6 +1,7 @@
 "use client";
 
 import { INDUSTRIES, type Industry } from "@/lib/industry";
+import { useLocale } from "./locale-provider";
 
 export function IndustrySelector({
   value,
@@ -9,10 +10,11 @@ export function IndustrySelector({
   value: Industry | null;
   onChange: (v: Industry) => void;
 }) {
+  const { t } = useLocale();
   return (
     <div className="space-y-3">
       <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)]">
-        STEP 01 / INDUSTRY (optional, improves accuracy)
+        {t("industry.label")}
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[var(--color-divider)]">
         {INDUSTRIES.map((ind) => {
@@ -29,14 +31,14 @@ export function IndustrySelector({
               }`}
             >
               <div className="font-mono text-[10px] tracking-widest uppercase font-semibold">
-                {ind.label}
+                {t(`industry.${ind.id}`)}
               </div>
               <div
                 className={`font-body text-[10px] leading-tight mt-1 ${
                   active ? "text-[var(--color-bg-base)]" : "text-[var(--color-ink-tertiary)]"
                 }`}
               >
-                {ind.hint}
+                {t(`industry.${ind.id}.hint`)}
               </div>
             </button>
           );
