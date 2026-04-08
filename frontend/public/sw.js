@@ -1,5 +1,6 @@
 // SignSafe service worker — minimal shell cache for offline access.
-const CACHE = "signsafe-v1";
+// BUMP VERSION on every deploy to force stale client SW eviction.
+const CACHE = "signsafe-v3";
 const SHELL = ["/", "/history", "/manifest.webmanifest", "/icon-192.svg", "/icon-512.svg"];
 
 self.addEventListener("install", (event) => {
@@ -9,9 +10,19 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))),
-    ),
+    Promise.all([
+      caches.keys().then((keys) =>
+        Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))),
+      ),
+      // Tell all open tabs to hard-reload so they pick up the new JS
+      self.clients.matchAll({ type: "window" }).then((clients) => {
+        clients.forEach((client) => {
+          try {
+            client.postMessage({ type: "sw-updated" });
+          } catch {}
+        });
+      }),
+    ]),
   );
   self.clients.claim();
 });

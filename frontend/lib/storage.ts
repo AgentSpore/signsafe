@@ -116,9 +116,21 @@ export function deleteAnalysis(id: string): void {
 
 export function clearAllHistory(): void {
   if (typeof window === "undefined") return;
-  const index = loadHistory();
-  for (const e of index) localStorage.removeItem(KEY_ITEM(e.id));
-  localStorage.removeItem(KEY_INDEX);
+  // Remove ALL signsafe:* localStorage keys (docs, indexes, translation caches, UI caches)
+  // to ensure a clean slate — useful when users have stale data from pre-v0.5.3 deploys.
+  const toRemove: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith("signsafe:") && !k.startsWith("signsafe:session") && k !== "signsafe:email" && k !== "signsafe:locale") {
+      toRemove.push(k);
+    }
+  }
+  toRemove.forEach((k) => localStorage.removeItem(k));
+  // Also clear sessionStorage (PDF bytes)
+  for (let i = sessionStorage.length - 1; i >= 0; i--) {
+    const k = sessionStorage.key(i);
+    if (k && k.startsWith("signsafe:")) sessionStorage.removeItem(k);
+  }
 }
 
 /** Compress analysis into URL fragment for sharing. */

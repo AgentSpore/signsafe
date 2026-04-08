@@ -38,10 +38,38 @@ export function AnalysisView({
     }
     setTranslating(true);
     translateAnalysis(data as AnalysisData & { id?: string }, locale)
-      .then(setDisplayData)
-      .catch(() => setDisplayData(data))
+      .then((translated) => {
+        setDisplayData(translated);
+      })
+      .catch((err) => {
+        console.error("Translation failed, falling back to EN", err);
+        setDisplayData(data);
+      })
       .finally(() => setTranslating(false));
   }, [locale, data]);
+
+  const forceRetranslate = async () => {
+    if (locale === "en") return;
+    setTranslating(true);
+    try {
+      // Clear cached translation for this doc
+      const docId = (data as { id?: string }).id;
+      if (docId && typeof window !== "undefined") {
+        Object.keys(localStorage)
+          .filter((k) => k.startsWith(`signsafe:doc:${docId}:`) && k !== `signsafe:doc:${docId}`)
+          .forEach((k) => localStorage.removeItem(k));
+      }
+      const fresh = await (await import("@/lib/translate")).translateAnalysis(
+        data as AnalysisData & { id?: string },
+        locale,
+      );
+      setDisplayData(fresh);
+    } catch (e) {
+      console.error("Force retranslate failed", e);
+    } finally {
+      setTranslating(false);
+    }
+  };
 
   const sorted = displayData.risk_clauses.slice().sort((a, b) => b.severity - a.severity);
 
@@ -164,7 +192,18 @@ export function AnalysisView({
 
           <aside className="lg:col-span-4">
             <div className="lg:sticky lg:top-8 space-y-6">
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2 items-center">
+                {locale !== "en" && (
+                  <button
+                    type="button"
+                    onClick={forceRetranslate}
+                    disabled={translating}
+                    title="Force re-translate (clears cache)"
+                    className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)] hover:text-[var(--color-accent-signal)] border border-[var(--color-divider)] px-3 py-1.5 disabled:opacity-50"
+                  >
+                    {translating ? "..." : "⟳ RETRY"}
+                  </button>
+                )}
                 <LocaleSwitcher />
               </div>
               <RiskScore score={displayData.overall_risk_score} recommendation={displayData.recommendation} />

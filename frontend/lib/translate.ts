@@ -4,8 +4,12 @@ import type { AnalysisData, RiskClause } from "./api";
 import type { Locale } from "./i18n";
 import { UI_EN, uiStringsList } from "./i18n";
 
-const UI_CACHE_KEY = (locale: Locale) => `signsafe:ui:${locale}`;
-const DOC_CACHE_KEY = (id: string, locale: Locale) => `signsafe:doc:${id}:${locale}`;
+// v2: bumped when translation shape changed (added original_text + extracted_pages).
+// Old v1 caches are ignored by loading with a version suffix.
+const CACHE_VERSION = "v2";
+const UI_CACHE_KEY = (locale: Locale) => `signsafe:ui:${locale}:${CACHE_VERSION}`;
+const DOC_CACHE_KEY = (id: string, locale: Locale) =>
+  `signsafe:doc:${id}:${locale}:${CACHE_VERSION}`;
 
 async function apiTranslate(items: string[], target: Locale): Promise<string[]> {
   const res = await fetch("/api/translate", {
