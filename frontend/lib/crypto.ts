@@ -8,11 +8,11 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(s);
 }
 
-function base64ToBytes(b64: string): Uint8Array {
+function base64ToBytes(b64: string): ArrayBuffer {
   const raw = atob(b64);
   const bytes = new Uint8Array(raw.length);
   for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-  return bytes;
+  return bytes.buffer;
 }
 
 /** Derive a 256-bit AES key from email using PBKDF2. Salt is deterministic per email. */
