@@ -8,9 +8,10 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(s);
 }
 
-function base64ToBytes(b64: string): Uint8Array {
+function base64ToBytes(b64: string): Uint8Array<ArrayBuffer> {
   const raw = atob(b64);
-  const bytes = new Uint8Array(raw.length);
+  const buffer = new ArrayBuffer(raw.length);
+  const bytes = new Uint8Array(buffer);
   for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
   return bytes;
 }
@@ -45,12 +46,14 @@ export async function encryptForEmail(
   plaintext: string,
 ): Promise<{ ciphertext: string; iv: string }> {
   const key = await deriveKey(email);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ivBuffer = new ArrayBuffer(12);
+  const iv = new Uint8Array(ivBuffer);
+  crypto.getRandomValues(iv);
   const enc = new TextEncoder();
   const cipherBuf = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
+    { name: "AES-GCM", iv: iv as BufferSource },
     key,
-    enc.encode(plaintext),
+    enc.encode(plaintext) as BufferSource,
   );
   return {
     ciphertext: bytesToBase64(new Uint8Array(cipherBuf)),
@@ -64,10 +67,12 @@ export async function decryptForEmail(
   iv: string,
 ): Promise<string> {
   const key = await deriveKey(email);
+  const ivBytes = base64ToBytes(iv);
+  const cipherBytes = base64ToBytes(ciphertext);
   const plainBuf = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: base64ToBytes(iv) },
+    { name: "AES-GCM", iv: ivBytes as BufferSource },
     key,
-    base64ToBytes(ciphertext),
+    cipherBytes as BufferSource,
   );
   return new TextDecoder().decode(plainBuf);
 }
