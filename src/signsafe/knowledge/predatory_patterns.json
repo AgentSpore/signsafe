@@ -1,0 +1,362 @@
+[
+  {
+    "id": "pg_unlimited",
+    "clause_type": "personal_guarantee",
+    "title": "Unlimited Personal Guarantee",
+    "severity": 5,
+    "indicators": ["personally guarantee", "unconditional guaranty", "without limitation", "jointly and severally"],
+    "why_risky": "Your personal assets (home, savings, car) are on the line if the business fails. Founders have lost homes over $50k rent disputes.",
+    "counter": "Cap guarantee at 6 months rent or convert to 'Good Guy Guarantee' — liable only for unpaid rent until you vacate in compliance."
+  },
+  {
+    "id": "pg_spouse",
+    "clause_type": "personal_guarantee",
+    "title": "Spousal Guarantee Required",
+    "severity": 5,
+    "indicators": ["spouse", "marital assets", "joint guarantee"],
+    "why_risky": "Forces your spouse to co-sign, exposing joint property and family finances to business risk.",
+    "counter": "Remove spousal requirement entirely. Most commercial landlords drop this if pushed."
+  },
+  {
+    "id": "ar_120day",
+    "clause_type": "auto_renewal",
+    "title": "120-Day Auto-Renewal Notice",
+    "severity": 4,
+    "indicators": ["automatically renew", "120 days", "unless tenant notifies"],
+    "why_risky": "Miss the narrow window and you're locked in for another full term (often 5 years). Most founders forget this deadline.",
+    "counter": "Require landlord to send 60-day advance notice of upcoming renewal deadline. Shorten notice window to 60 days."
+  },
+  {
+    "id": "ar_escalation",
+    "clause_type": "auto_renewal",
+    "title": "Auto-Renewal With Rent Increase",
+    "severity": 4,
+    "indicators": ["renewal rate", "fair market value", "CPI increase"],
+    "why_risky": "Automatic renewal at undefined 'fair market' or CPI means you commit to unknown future cost.",
+    "counter": "Fix renewal rent to current rate + capped annual increase (e.g., 3%)."
+  },
+  {
+    "id": "cam_uncapped",
+    "clause_type": "cam_charges",
+    "title": "Uncapped CAM Pass-Through",
+    "severity": 4,
+    "indicators": ["common area maintenance", "operating expenses", "pro rata share", "without limitation"],
+    "why_risky": "Landlord can pass unlimited maintenance costs, capital improvements, and even landlord salaries. CAM can double your effective rent.",
+    "counter": "Cap CAM increases at 5% annually. Exclude capital improvements, landlord overhead, and legal fees."
+  },
+  {
+    "id": "cam_no_audit",
+    "clause_type": "cam_charges",
+    "title": "No CAM Audit Rights",
+    "severity": 4,
+    "indicators": ["landlord's determination", "sole discretion", "no audit"],
+    "why_risky": "You cannot verify if CAM charges are accurate or padded with improper expenses.",
+    "counter": "Require annual detailed CAM statement with right to audit at tenant's cost. Refund overcharges >3%."
+  },
+  {
+    "id": "cam_admin_fee",
+    "clause_type": "cam_charges",
+    "title": "CAM Administrative Fee (15%+)",
+    "severity": 3,
+    "indicators": ["administrative fee", "management fee", "15 percent"],
+    "why_risky": "15% markup on already inflated CAM charges is pure profit for landlord.",
+    "counter": "Remove admin fee or cap at 5%. Typical market range is 3-5%."
+  },
+  {
+    "id": "hold_200pct",
+    "clause_type": "holdover_penalty",
+    "title": "200% Holdover Rent",
+    "severity": 4,
+    "indicators": ["holdover", "200 percent", "double rent"],
+    "why_risky": "If you stay even one day past lease end (construction delays, new space not ready), rent doubles retroactively.",
+    "counter": "Limit holdover to 125% of base rent for first 60 days, negotiated extension after."
+  },
+  {
+    "id": "hold_indefinite",
+    "clause_type": "holdover_penalty",
+    "title": "Indefinite Holdover Damages",
+    "severity": 5,
+    "indicators": ["consequential damages", "lost profits", "all damages"],
+    "why_risky": "Landlord can sue for unlimited lost profits from new tenant deal that fell through.",
+    "counter": "Cap holdover damages at actual additional rent, no consequential damages."
+  },
+  {
+    "id": "reloc_any",
+    "clause_type": "relocation_clause",
+    "title": "Unilateral Relocation Right",
+    "severity": 5,
+    "indicators": ["relocate tenant", "substitute premises", "comparable space"],
+    "why_risky": "Landlord can move you to a worse location. Bad for retail/restaurant with location-dependent traffic.",
+    "counter": "Remove entirely, or require your written consent + landlord pays ALL moving costs + new signage + lost revenue during move."
+  },
+  {
+    "id": "reloc_no_compensation",
+    "clause_type": "relocation_clause",
+    "title": "Relocation Without Compensation",
+    "severity": 5,
+    "indicators": ["at tenant's expense", "no compensation"],
+    "why_risky": "You pay to move yourself after landlord decides to relocate you. Can cost $50k+.",
+    "counter": "Landlord covers 100% of moving expenses, tenant improvement rebuilds, downtime lost revenue, and new signage."
+  },
+  {
+    "id": "excl_missing",
+    "clause_type": "exclusive_use",
+    "title": "No Exclusive Use Protection",
+    "severity": 3,
+    "indicators": ["no exclusive", "landlord may lease"],
+    "why_risky": "A direct competitor can open next door in same building/plaza.",
+    "counter": "Add exclusive use clause for your business category within the property or 500ft radius."
+  },
+  {
+    "id": "excl_narrow",
+    "clause_type": "exclusive_use",
+    "title": "Narrowly Defined Exclusive Use",
+    "severity": 3,
+    "indicators": ["exclusive use", "limited to"],
+    "why_risky": "Definition too narrow — a slightly different concept (e.g. 'cafe' vs 'coffee shop') can still compete.",
+    "counter": "Broaden category with specific examples. Include 'any business deriving 20%+ revenue from [category]'."
+  },
+  {
+    "id": "assign_none",
+    "clause_type": "assignment_ban",
+    "title": "Absolute Assignment Ban",
+    "severity": 5,
+    "indicators": ["shall not assign", "no sublease", "expressly prohibited"],
+    "why_risky": "You cannot sell the business (buyers need lease transfer). You're locked to the space forever.",
+    "counter": "Allow assignment with landlord consent 'not to be unreasonably withheld'. Permit assignment to affiliates without consent."
+  },
+  {
+    "id": "assign_recapture",
+    "clause_type": "assignment_ban",
+    "title": "Recapture Right on Assignment",
+    "severity": 4,
+    "indicators": ["recapture", "terminate upon assignment"],
+    "why_risky": "Landlord can take back the space instead of approving your buyer, killing the sale of your business.",
+    "counter": "Remove recapture or limit to cases where proposed assignee changes use significantly."
+  },
+  {
+    "id": "assign_profit",
+    "clause_type": "assignment_ban",
+    "title": "Assignment Profit Share to Landlord",
+    "severity": 3,
+    "indicators": ["profit", "excess rent", "50 percent"],
+    "why_risky": "Landlord takes 50-100% of any 'profit' you make on sublease.",
+    "counter": "Cap landlord share at 25% of profits after deducting your costs (legal fees, TI amortization, brokerage)."
+  },
+  {
+    "id": "indem_broad",
+    "clause_type": "indemnification",
+    "title": "Broad Tenant Indemnification",
+    "severity": 4,
+    "indicators": ["indemnify", "hold harmless", "any and all claims", "landlord's negligence"],
+    "why_risky": "You indemnify landlord even for their own negligence — pay for landlord's mistakes.",
+    "counter": "Exclude landlord's gross negligence and willful misconduct. Make indemnification mutual."
+  },
+  {
+    "id": "indem_no_insurance_cap",
+    "clause_type": "indemnification",
+    "title": "No Insurance Cap on Indemnity",
+    "severity": 3,
+    "indicators": ["in addition to insurance", "beyond coverage"],
+    "why_risky": "Your liability is uncapped — if damages exceed insurance, you personally pay.",
+    "counter": "Limit indemnification to available insurance coverage. Mutual waiver of subrogation."
+  },
+  {
+    "id": "term_landlord_any",
+    "clause_type": "early_termination",
+    "title": "Landlord Termination For Any Reason",
+    "severity": 5,
+    "indicators": ["landlord may terminate", "at landlord's discretion", "convenience"],
+    "why_risky": "Landlord can kick you out mid-lease after you've invested $100k+ in build-out.",
+    "counter": "Remove. Only allow termination for material tenant default with 30-day cure period."
+  },
+  {
+    "id": "term_tenant_none",
+    "clause_type": "early_termination",
+    "title": "No Tenant Early-Out",
+    "severity": 3,
+    "indicators": ["no early termination", "tenant bound"],
+    "why_risky": "You're locked in if business fails — must pay full lease remainder (could be $500k).",
+    "counter": "Add early termination right after 24 months with penalty of 3 months rent + unamortized TI."
+  },
+  {
+    "id": "term_penalty_huge",
+    "clause_type": "early_termination",
+    "title": "Early Termination Penalty >12 Months",
+    "severity": 4,
+    "indicators": ["12 months", "termination fee", "liquidated damages"],
+    "why_risky": "Penalty exceeds typical restart cost for landlord to find new tenant.",
+    "counter": "Cap at 6 months rent + unamortized landlord concessions (TI, free rent)."
+  },
+  {
+    "id": "sec_excessive",
+    "clause_type": "security_deposit",
+    "title": "Excessive Security Deposit (>3 Months)",
+    "severity": 3,
+    "indicators": ["six months", "12 months", "letter of credit"],
+    "why_risky": "Ties up working capital you need for operations. Landlord can keep it on minor disputes.",
+    "counter": "Cap at 2 months rent. Add burn-down schedule — reduces 25%/year after on-time payments."
+  },
+  {
+    "id": "sec_not_returned",
+    "clause_type": "security_deposit",
+    "title": "Deposit Non-Refundable or Unreturned",
+    "severity": 4,
+    "indicators": ["non-refundable", "retained", "sole discretion"],
+    "why_risky": "You never see the money back regardless of condition at lease end.",
+    "counter": "Refund within 30 days of lease end, itemized deductions required. Interest accrues per state law."
+  },
+  {
+    "id": "esc_cpi_uncapped",
+    "clause_type": "rent_escalation",
+    "title": "Uncapped CPI Escalation",
+    "severity": 3,
+    "indicators": ["CPI", "consumer price index", "each year"],
+    "why_risky": "In high-inflation years, rent can jump 8-10% annually with no ceiling.",
+    "counter": "Cap annual increases at 3% OR CPI, whichever is lower. Floor at 0%."
+  },
+  {
+    "id": "esc_fixed_4pct",
+    "clause_type": "rent_escalation",
+    "title": "4%+ Fixed Annual Escalation",
+    "severity": 3,
+    "indicators": ["4 percent", "5 percent", "annual increase"],
+    "why_risky": "Over 5 years, compounds to 22%+ rent increase regardless of market conditions.",
+    "counter": "Negotiate to 2.5-3% annual, typical for commercial leases in stable markets."
+  },
+  {
+    "id": "esc_porter_wage",
+    "clause_type": "rent_escalation",
+    "title": "Porter Wage Escalation",
+    "severity": 3,
+    "indicators": ["porter wage", "operating expense escalation"],
+    "why_risky": "Rent tied to union labor costs which rise faster than inflation.",
+    "counter": "Replace with CPI cap or fixed percentage."
+  },
+  {
+    "id": "maint_all_tenant",
+    "clause_type": "maintenance_shift",
+    "title": "All Maintenance On Tenant (Triple Net)",
+    "severity": 4,
+    "indicators": ["triple net", "NNN", "all repairs", "structural"],
+    "why_risky": "You pay for roof replacement ($50k+), HVAC failures, parking lot repaving — things landlord should own.",
+    "counter": "Exclude structural, roof, foundation, exterior walls, and HVAC replacement from tenant responsibility."
+  },
+  {
+    "id": "maint_hvac_failure",
+    "clause_type": "maintenance_shift",
+    "title": "HVAC Replacement on Tenant",
+    "severity": 3,
+    "indicators": ["HVAC", "air conditioning", "replacement"],
+    "why_risky": "Commercial HVAC replacement costs $15-40k. Landlord should amortize capital improvements.",
+    "counter": "Tenant pays routine maintenance only. Replacement cost amortized over equipment life, tenant pays pro-rata share."
+  },
+  {
+    "id": "maint_compliance",
+    "clause_type": "maintenance_shift",
+    "title": "All Code Compliance on Tenant",
+    "severity": 4,
+    "indicators": ["code compliance", "ADA", "legal requirements"],
+    "why_risky": "You pay for retrofitting a building landlord failed to maintain (ADA upgrades can be $100k+).",
+    "counter": "Exclude pre-existing conditions and structural ADA compliance. Tenant responsible only for changes triggered by tenant's specific use."
+  },
+  {
+    "id": "other_noncompete_post",
+    "clause_type": "other",
+    "title": "Post-Lease Non-Compete",
+    "severity": 4,
+    "indicators": ["non-compete", "after termination", "shall not operate"],
+    "why_risky": "Prevents you from opening a new location nearby after lease ends, killing your business continuity.",
+    "counter": "Remove entirely, or limit to 6 months within 500 feet."
+  },
+  {
+    "id": "other_signage",
+    "clause_type": "other",
+    "title": "Landlord Controls All Signage",
+    "severity": 2,
+    "indicators": ["landlord approval", "signage", "sole discretion"],
+    "why_risky": "Can reject your branding, logos, or any visibility that helps you attract customers.",
+    "counter": "Add pre-approved signage specs. Landlord approval 'not unreasonably withheld'."
+  },
+  {
+    "id": "other_hours",
+    "clause_type": "other",
+    "title": "Forced Operating Hours",
+    "severity": 3,
+    "indicators": ["shall operate", "minimum hours", "continuous operation"],
+    "why_risky": "You must stay open even if unprofitable (late nights, holidays). Common in malls.",
+    "counter": "Remove minimum hours requirement. Tenant determines operating schedule."
+  },
+  {
+    "id": "other_radius",
+    "clause_type": "other",
+    "title": "Radius Restriction",
+    "severity": 4,
+    "indicators": ["radius", "shall not open", "within miles"],
+    "why_risky": "Prevents opening second location nearby, capping your growth.",
+    "counter": "Remove, or shrink to 1 mile for same concept only."
+  },
+  {
+    "id": "other_rent_acceleration",
+    "clause_type": "other",
+    "title": "Rent Acceleration On Default",
+    "severity": 5,
+    "indicators": ["acceleration", "immediately due", "all remaining rent"],
+    "why_risky": "Miss one payment — entire remaining lease becomes due immediately. Can force bankruptcy.",
+    "counter": "Remove acceleration. Landlord must mitigate damages by re-leasing space."
+  },
+  {
+    "id": "other_waiver_jury",
+    "clause_type": "other",
+    "title": "Jury Trial Waiver",
+    "severity": 2,
+    "indicators": ["waive jury", "bench trial"],
+    "why_risky": "Landlords historically win more bench trials. Reduces your leverage in disputes.",
+    "counter": "Remove waiver or make mutual."
+  },
+  {
+    "id": "other_attorney_fees_oneway",
+    "clause_type": "other",
+    "title": "One-Way Attorney Fees",
+    "severity": 3,
+    "indicators": ["landlord's attorneys fees", "prevailing party", "tenant shall pay"],
+    "why_risky": "Only landlord gets legal fees recovered if they win. You pay yours even when you're right.",
+    "counter": "Make mutual — prevailing party in any dispute recovers reasonable attorney fees."
+  },
+  {
+    "id": "other_subordination",
+    "clause_type": "other",
+    "title": "Automatic Subordination To Lender",
+    "severity": 3,
+    "indicators": ["subordinate", "mortgagee", "lender"],
+    "why_risky": "If landlord defaults on mortgage, bank can terminate your lease.",
+    "counter": "Require Non-Disturbance Agreement (SNDA) from lender protecting tenant in foreclosure."
+  },
+  {
+    "id": "other_estoppel_short",
+    "clause_type": "other",
+    "title": "10-Day Estoppel Certificate Deadline",
+    "severity": 2,
+    "indicators": ["estoppel", "10 days", "5 days"],
+    "why_risky": "Short deadline + penalty means you sign without reviewing, waiving future claims.",
+    "counter": "Extend to 20 business days. Limit to factual statements."
+  },
+  {
+    "id": "other_use_restriction",
+    "clause_type": "other",
+    "title": "Highly Restrictive Permitted Use",
+    "severity": 3,
+    "indicators": ["solely for", "no other purpose", "specific use"],
+    "why_risky": "Cannot pivot business model without breaching lease. Kills startups that need to iterate.",
+    "counter": "Broaden to 'general office use' or 'retail sales of [category] and related uses'."
+  },
+  {
+    "id": "other_insurance_excessive",
+    "clause_type": "other",
+    "title": "Excessive Insurance Requirements",
+    "severity": 3,
+    "indicators": ["5 million", "10 million", "aggregate limit"],
+    "why_risky": "$5-10M liability limits cost 3x normal premium, burdening cash flow.",
+    "counter": "Reduce to $1-2M general liability, $2M umbrella. Typical commercial coverage."
+  }
+]

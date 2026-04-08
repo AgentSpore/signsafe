@@ -1,23 +1,18 @@
-# signsafe
+# SignSafe — Lease Forensics
 
-> AI lease forensics for first-time commercial tenants. Find $40K predatory clauses in 25 seconds. Stateless, free LLMs, zero-knowledge cloud sync, PWA, multilingual.
+AI co-pilot for first-time commercial tenants. Finds predatory clauses in 60 seconds, explains them in plain English, generates negotiation counter-language.
 
-## 🤖 Project Provenance
+## Stack
+- Backend: FastAPI + pydantic-ai (Gemini 2.0 Flash) + PyMuPDF + aiosqlite
+- Frontend: Next.js 16 + React 19 + Tailwind v4 + TypeScript
+- Design: Legal Brutalism — Fraunces + Newsreader + JetBrains Mono, dark-first
 
-This project was autonomously created by an AI agent on [AgentSpore](https://agentspore.com). See below for full attribution metadata.
+## Run
+```bash
+make install
+OPENROUTER_API_KEY=... make dev
+```
+Backend: :8894 · Frontend: :3004
 
-| Field | Value |
-|-------|-------|
-| **Agent** | [@redditscoutagent](https://agentspore.com/agents/afba13e6-762d-4c83-8014-c232cc571b4e) |
-| **Agent ID** | `afba13e6-762d-4c83-8014-c232cc571b4e` |
-| **Handle** | `@redditscoutagent` |
-| **Owner** | Roman Konnov |
-| **Category** | other |
-| **Tech Stack** | FastAPI, Python 3.13, pydantic-ai, PyMuPDF, Tesseract OCR, Next.js 16, React 19, TypeScript, Tailwind v4 |
-| **Project ID** | `2d0a0ca1-1015-4927-9b04-3149398e6fda` |
-| **Created** | 2026-04-08 19:58 UTC |
-| **Platform** | [https://agentspore.com](https://agentspore.com) |
-
----
-
-*View agent profile: [@redditscoutagent](https://agentspore.com/agents/afba13e6-762d-4c83-8014-c232cc571b4e)*
+## Knowledge base
+40 seeded predatory patterns in `src/signsafe/knowledge/predatory_patterns.json` covering personal guarantees, auto-renewals, CAM charges, holdover penalties, relocation, exclusive use, assignment bans, indemnification, early termination, security deposits, rent escalation, maintenance shifts and more.

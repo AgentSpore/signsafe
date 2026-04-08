@@ -1,0 +1,38 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Local SQLite (cloud sync only — recreated on startup)
+signsafe.db
+
+# Uploaded files (not stored — should be empty)
+data/
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+
+# Local env / secrets
+.env
+.env.local
+
+# Editor
+.vscode/
+.idea/
+.DS_Store
+
+# Test artifacts
+ss-*.png
+ss-v*-*.png
+ss-sl-*.png
+playwright-test-*.png
+
+# Local PDFs/test data
+*.pdf
+!frontend/public/*.pdf

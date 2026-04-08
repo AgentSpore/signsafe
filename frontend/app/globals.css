@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-base: #0A0C10;
+  --color-bg-surface: #13161C;
+  --color-bg-elevated: #1C2028;
+  --color-ink-primary: #F4F1EA;
+  --color-ink-secondary: #A8A296;
+  --color-ink-tertiary: #6B6760;
+  --color-accent-electric: #7C5CFF;
+  --color-accent-signal: #D4FF4F;
+  --color-risk-caution: #FFD166;
+  --color-risk-warning: #FF8A3D;
+  --color-risk-critical: #FF3D5A;
+  --color-risk-deal-breaker: #FF003C;
+  --color-divider: rgba(244, 241, 234, 0.12);
+  --color-grid: rgba(244, 241, 234, 0.06);
+
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-body: "Newsreader", ui-serif, Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  background: var(--color-bg-base);
+  color: var(--color-ink-primary);
+  font-family: var(--font-body);
+  font-feature-settings: "ss01", "ss02";
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-accent-signal);
+  color: var(--color-bg-base);
+}
+
+.font-display { font-family: var(--font-display); letter-spacing: -0.02em; }
+.font-mono { font-family: var(--font-mono); }
+
+.grid-lines {
+  background-image:
+    linear-gradient(to right, var(--color-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-grid) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.pulse-critical {
+  animation: pulse-critical 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse-critical {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 61, 90, 0.6); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 61, 90, 0); }
+}
+
+.reveal-up {
+  animation: reveal-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
