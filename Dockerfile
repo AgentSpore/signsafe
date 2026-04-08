@@ -7,6 +7,10 @@ COPY frontend/ ./
 RUN npm run build
 
 FROM python:3.13-slim
+
+COPY --from=node:20-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:20-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 WORKDIR /app
 
 # System deps: tesseract for OCR fallback on scanned PDFs
