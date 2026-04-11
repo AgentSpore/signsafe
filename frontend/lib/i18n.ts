@@ -19,6 +19,8 @@ export const UI_EN: Record<string, string> = {
   "nav.how": "How it works",
   "nav.patterns": "Patterns",
   "nav.history": "History",
+  "nav.elderCare": "Assisted Living",
+  "nav.commercial": "Commercial Lease",
 
   // Hero (home page)
   "hero.meta.vol": "VOL. 01 / 2026",
@@ -59,6 +61,8 @@ export const UI_EN: Record<string, string> = {
   "industry.fitness.hint": "Gyms, studios, yoga",
   "industry.warehouse": "Warehouse",
   "industry.warehouse.hint": "Industrial, logistics",
+  "industry.elder_care": "Assisted Living",
+  "industry.elder_care.hint": "Senior care, memory care, CCRC",
   "industry.other": "Other",
   "industry.other.hint": "General commercial",
 
@@ -70,6 +74,11 @@ export const UI_EN: Record<string, string> = {
   "upload.analyzing": "Running forensics…",
   "upload.extracting": "Reading your PDF…",
   "upload.stage": "STAGE",
+  "upload.timeHint": "USUALLY TAKES 20-30 SECONDS",
+  "upload.whatToExpect": "WHAT HAPPENS NEXT",
+  "upload.step1": "PDF parsed in memory (no server storage)",
+  "upload.step2": "LLM cross-references 74 predatory patterns",
+  "upload.step3": "You get a risk score + negotiation counter-language",
 
   "demo.try": "TRY LIVE DEMO (NO UPLOAD) →",
 
@@ -186,6 +195,52 @@ export const UI_EN: Record<string, string> = {
   "footer.agentspore": "AGENTSPORE ↗",
   "footer.disclaimer":
     "EDUCATIONAL TOOL · NOT LEGAL ADVICE · CONSULT A LICENSED ATTORNEY FOR CRITICAL DECISIONS",
+
+  // Home page path switcher
+  "home.pathSwitcher.label": "WHAT ARE YOU REVIEWING?",
+  "home.pathSwitcher.lease": "Commercial Lease",
+  "home.pathSwitcher.leaseHint": "First business location — restaurant, shop, office, gym.",
+  "home.pathSwitcher.elder": "Assisted Living Contract",
+  "home.pathSwitcher.elderHint": "Moving a parent into senior care — read every clause first.",
+  "home.pathSwitcher.cta": "SWITCH →",
+
+  // Elder care landing page
+  "elder.meta.label": "ELDER CARE FORENSICS",
+  "elder.meta.vol": "VOL. 01 / 2026",
+  "elder.meta.for": "FOR FAMILIES PLACING A PARENT",
+  "elder.stats.body": "ELDER CARE TRAPS DETECTED",
+  "elder.privacy.body":
+    "Stateless. Your contract is analyzed in memory and discarded. Results saved only in your browser.",
+  "elder.heading.line1": "MOM NEEDS",
+  "elder.heading.dont": "DON'T",
+  "elder.heading.line2": "CARE.",
+  "elder.heading.line3": "SIGN BLIND.",
+  "elder.lead":
+    "Assisted living contracts hide $40k fee escalations behind friendly tours. Care level jumps, forced med management, arbitration waivers for neglect. We find them in",
+  "elder.whatWeFind": "WHAT WE FIND",
+  "elder.find.careEscalation": "Unilateral care level hikes",
+  "elder.find.communityFee": "Non-refundable entrance fees",
+  "elder.find.arbitration": "Neglect / abuse arbitration waivers",
+  "elder.find.medicaid": "Medicaid spend-down evictions",
+  "elder.find.responsibleParty": "Adult child personal guaranty",
+  "elder.upload.drop": "Drop your assisted living contract PDF.",
+  "elder.upload.limits": "Up to 10MB · processed in memory · never stored on server.",
+  "elder.cta.backToCommercial": "← BACK TO COMMERCIAL LEASE",
+
+  // How it works — shared elder copy
+  "elder.how.title": "Three steps. Zero data retention. One clear verdict for your family.",
+  "elder.how.extractBody":
+    "We parse every page of the residency agreement, care plan addendum, and fee schedules.",
+  "elder.how.forensicsBody":
+    "Free open-source LLMs cross-reference 34 elder care traps against your exact contract.",
+  "elder.how.verdictBody":
+    "Risk score, plain-English explanations, questions to ask the director. Saved to your browser only.",
+
+  // Elder-specific severity descriptions
+  "elder.scale.dealBreakerDesc":
+    "Walk away. Find a different facility. This clause will hurt your parent.",
+  "elder.scale.criticalDesc":
+    "Red flag. Require amendment before move-in day.",
 
   // 404 / not found
   "notFound.header": "ERROR 404 / NOT IN LOCAL STORAGE",

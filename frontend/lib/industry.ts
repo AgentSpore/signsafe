@@ -6,9 +6,10 @@ export type Industry =
   | "salon"
   | "fitness"
   | "warehouse"
+  | "elder_care"
   | "other";
 
-export const INDUSTRIES: { id: Industry; label: string; hint: string }[] = [
+export const COMMERCIAL_INDUSTRIES: { id: Industry; label: string; hint: string }[] = [
   { id: "restaurant", label: "Restaurant", hint: "Food service, cafes, bars" },
   { id: "retail", label: "Retail", hint: "Stores, boutiques, showrooms" },
   { id: "office", label: "Office", hint: "Coworking, SaaS, agencies" },
@@ -18,3 +19,16 @@ export const INDUSTRIES: { id: Industry; label: string; hint: string }[] = [
   { id: "warehouse", label: "Warehouse", hint: "Industrial, logistics" },
   { id: "other", label: "Other", hint: "General commercial" },
 ];
+
+// Backwards compat alias — home page still uses INDUSTRIES (commercial only).
+export const INDUSTRIES = COMMERCIAL_INDUSTRIES;
+
+export const ELDER_CARE_INDUSTRY: { id: Industry; label: string; hint: string } = {
+  id: "elder_care",
+  label: "Assisted Living",
+  hint: "Senior care, memory care, CCRC",
+};
+
+export function isElderCare(industry: Industry | null): boolean {
+  return industry === "elder_care";
+}

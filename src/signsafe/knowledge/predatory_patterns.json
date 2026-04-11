@@ -358,5 +358,346 @@
     "indicators": ["5 million", "10 million", "aggregate limit"],
     "why_risky": "$5-10M liability limits cost 3x normal premium, burdening cash flow.",
     "counter": "Reduce to $1-2M general liability, $2M umbrella. Typical commercial coverage."
+  },
+
+  {
+    "id": "ec_care_escalation_unilateral",
+    "applies_to": "elder_care",
+    "clause_type": "care_escalation",
+    "title": "Unilateral Care Level Escalation",
+    "severity": 5,
+    "indicators": ["sole discretion", "level of care", "reassess", "facility's determination"],
+    "why_risky": "Facility can raise your parent's 'care level' at any time based on their own assessment, doubling or tripling monthly rate. Families routinely see $3,500/mo become $7,000+/mo within 12 months.",
+    "counter": "Require independent third-party geriatric assessment before any care level increase. Cap increases at 10% per 12-month period. Require 60-day written notice with right to appeal."
+  },
+  {
+    "id": "ec_community_fee_nonrefundable",
+    "applies_to": "elder_care",
+    "clause_type": "community_fee",
+    "title": "Non-Refundable Community / Entrance Fee",
+    "severity": 4,
+    "indicators": ["community fee", "entrance fee", "non-refundable", "one-time"],
+    "why_risky": "$3,000-$10,000+ charge at move-in that you lose completely even if your parent passes away, is hospitalized, or leaves within weeks. Pure profit for the facility.",
+    "counter": "Require pro-rated refund if resident leaves within 90 days for any reason (death, hospitalization, relocation). Cap community fee at $2,000."
+  },
+  {
+    "id": "ec_med_management_mandatory",
+    "applies_to": "elder_care",
+    "clause_type": "med_management",
+    "title": "Mandatory Medication Management Add-On",
+    "severity": 4,
+    "indicators": ["medication management", "pharmacy services", "$", "per month"],
+    "why_risky": "Surprise $500-$2,000/mo fee for staff handing out pills. Often forced after 30-90 days of move-in. One Reddit caregiver reported $1,200/mo forced add-on after a year of self-management.",
+    "counter": "Allow family member or outside home-health provider to manage medications at no charge. If required, cap at $300/mo flat fee."
+  },
+  {
+    "id": "ec_30day_notice_after_death",
+    "applies_to": "elder_care",
+    "clause_type": "move_out_notice",
+    "title": "Full Month Payment After Death or Hospitalization",
+    "severity": 4,
+    "indicators": ["30 days notice", "last month", "regardless of occupancy"],
+    "why_risky": "Family pays full month's rent AFTER your parent has died or been permanently hospitalized. Adds $3,000-$8,000 to grief.",
+    "counter": "Pro-rate final month to actual date of death or permanent hospitalization. No notice period required for death."
+  },
+  {
+    "id": "ec_forced_memory_care_transfer",
+    "applies_to": "elder_care",
+    "clause_type": "care_escalation",
+    "title": "Forced Transfer to Memory Care",
+    "severity": 5,
+    "indicators": ["memory care", "transfer", "facility's discretion", "dementia"],
+    "why_risky": "Facility can unilaterally move your parent to locked memory care unit at 1.5-2x cost based on their own staff's judgment. No independent evaluation required.",
+    "counter": "Require diagnosis from outside geriatrician + family consent before any transfer to memory care. Allow 30-day family challenge period."
+  },
+  {
+    "id": "ec_medicaid_refusal",
+    "applies_to": "elder_care",
+    "clause_type": "medicaid_spend_down",
+    "title": "No Medicaid / Private Pay Only",
+    "severity": 5,
+    "indicators": ["private pay", "does not accept Medicaid", "spend-down", "self-pay"],
+    "why_risky": "When savings run out (average ALF stay exhausts savings in 2-3 years), facility evicts rather than accept Medicaid. Resident must be relocated — often traumatic for dementia patients.",
+    "counter": "Require facility to either accept Medicaid after 24 months of private pay OR provide 180-day transition support to a Medicaid-accepting facility."
+  },
+  {
+    "id": "ec_third_party_restriction",
+    "applies_to": "elder_care",
+    "clause_type": "third_party_restriction",
+    "title": "Restricted Outside Hospice / Home Health",
+    "severity": 4,
+    "indicators": ["approved providers", "facility's preferred", "hospice", "home health"],
+    "why_risky": "Family cannot bring in outside hospice, physical therapy, or home-health they trust. Forces use of facility's preferred (and often more expensive) vendors.",
+    "counter": "Allow resident and family to choose any licensed hospice, home-health, or therapy provider. Facility must cooperate with care coordination."
+  },
+  {
+    "id": "ec_arbitration_waiver_neglect",
+    "applies_to": "elder_care",
+    "clause_type": "arbitration_waiver",
+    "title": "Mandatory Arbitration for Neglect / Abuse",
+    "severity": 5,
+    "indicators": ["binding arbitration", "waive jury", "class action waiver"],
+    "why_risky": "Forces family to private arbitration (facility-friendly forum) if parent is neglected, falls, develops pressure ulcers, or is abused. Waives right to jury trial and often caps damages.",
+    "counter": "Strike arbitration clause entirely OR limit to commercial billing disputes only. Never waive right to sue for personal injury, neglect, or wrongful death."
+  },
+  {
+    "id": "ec_responsible_party_personal_guaranty",
+    "applies_to": "elder_care",
+    "clause_type": "responsible_party",
+    "title": "Adult Child as Personal Financial Guarantor",
+    "severity": 5,
+    "indicators": ["responsible party", "personally guarantees", "jointly liable", "financial guarantor"],
+    "why_risky": "Federal law prohibits requiring third-party guarantors for nursing facility admission, but assisted living often evades this. You sign and your own assets are on the hook if your parent cannot pay.",
+    "counter": "Sign only as 'Agent for Resident' using POA. Do NOT sign as Responsible Party, Guarantor, or Co-Obligor. Federal Nursing Home Reform Act applies to many of these contracts."
+  },
+  {
+    "id": "ec_liability_cap_falls",
+    "applies_to": "elder_care",
+    "clause_type": "liability_cap",
+    "title": "Liability Cap for Falls / Medication Errors",
+    "severity": 4,
+    "indicators": ["limitation of liability", "maximum liability", "not liable"],
+    "why_risky": "Facility caps their liability at $1,000 or 'monthly fee' for falls, medication errors, infections, elopement. Parent loses legal protection for the most common serious harms.",
+    "counter": "Strike liability caps entirely. Facility must maintain professional liability insurance and be liable for ordinary negligence standards."
+  },
+  {
+    "id": "ec_discharge_broad_grounds",
+    "applies_to": "elder_care",
+    "clause_type": "discharge_rights",
+    "title": "Broad Discharge / Eviction Rights",
+    "severity": 4,
+    "indicators": ["facility may discharge", "sole discretion", "disruptive", "behavioral"],
+    "why_risky": "Facility can evict for 'behavior,' 'care needs beyond license,' or 'disruptive conduct' — common dementia symptoms. Minimal appeal rights. Family scrambles to find new placement.",
+    "counter": "Limit discharge to: non-payment (after 30-day cure), written danger to self/others, facility closure. Require 60-day notice + written discharge plan."
+  },
+  {
+    "id": "ec_bed_hold_fee_hospital",
+    "applies_to": "elder_care",
+    "clause_type": "holding_fee",
+    "title": "Full Rate Bed Hold During Hospitalization",
+    "severity": 3,
+    "indicators": ["bed hold", "hospitalization", "reserve"],
+    "why_risky": "Facility charges full daily rate ($100-$300/day) to 'hold' your parent's room during hospital stays, even though zero services are being used.",
+    "counter": "Require 50% bed-hold rate (Medicare precedent). Waive entirely if facility is over 90% occupied."
+  },
+  {
+    "id": "ec_care_plan_unilateral",
+    "applies_to": "elder_care",
+    "clause_type": "care_plan_change",
+    "title": "Unilateral Care Plan Modification",
+    "severity": 4,
+    "indicators": ["care plan", "modified", "at any time", "sole discretion"],
+    "why_risky": "Facility can add services (and fees) or remove services (like meal delivery, activities) without family sign-off. No accountability for care quality.",
+    "counter": "Care plan changes require written family notice + 14-day review period. Family can request outside review of any care change."
+  },
+  {
+    "id": "ec_price_increase_no_cap",
+    "applies_to": "elder_care",
+    "clause_type": "care_escalation",
+    "title": "Unlimited Annual Price Increases",
+    "severity": 4,
+    "indicators": ["rate adjustment", "annual increase", "30 days notice", "market rate"],
+    "why_risky": "Facility can raise monthly rate with only 30 days notice. No cap. Families see 8-15% annual increases — faster than Social Security COLA.",
+    "counter": "Cap annual increase at CPI + 2% or 5% max, whichever is lower. Require 90 days notice."
+  },
+  {
+    "id": "ec_no_refund_prepaid_services",
+    "applies_to": "elder_care",
+    "clause_type": "community_fee",
+    "title": "No Refund on Prepaid Services",
+    "severity": 3,
+    "indicators": ["prepaid", "non-refundable", "services", "credits"],
+    "why_risky": "Money paid upfront for meals, activities, transportation is lost if resident leaves, dies, or facility fails to deliver service.",
+    "counter": "Pro-rate refund of unused prepaid services within 30 days of departure."
+  },
+  {
+    "id": "ec_photography_release",
+    "applies_to": "elder_care",
+    "clause_type": "other",
+    "title": "Blanket Photo / Video Release",
+    "severity": 2,
+    "indicators": ["photograph", "video", "marketing", "likeness"],
+    "why_risky": "Facility uses resident's image in marketing materials without explicit consent. Dementia residents cannot meaningfully consent.",
+    "counter": "Require case-by-case written consent. Family can revoke any time."
+  },
+  {
+    "id": "ec_visitation_restrictions",
+    "applies_to": "elder_care",
+    "clause_type": "other",
+    "title": "Visitation Restrictions",
+    "severity": 3,
+    "indicators": ["visiting hours", "overnight", "restricted"],
+    "why_risky": "Limits when family can visit. Federal law protects visitation rights, but AL contracts often try to restrict.",
+    "counter": "24/7 visitation by immediate family. Reasonable notice for overnight. No restrictions during illness."
+  },
+  {
+    "id": "ec_move_in_condition_as_is",
+    "applies_to": "elder_care",
+    "clause_type": "other",
+    "title": "Room Accepted As-Is",
+    "severity": 3,
+    "indicators": ["as is", "accepted condition", "no improvements"],
+    "why_risky": "Resident assumes any maintenance issues (broken heat, mold, pest). Facility off the hook.",
+    "counter": "Move-in inspection with written list of issues. Facility fixes within 14 days. Material issues = right to rescind contract."
+  },
+  {
+    "id": "ec_assignment_of_benefits",
+    "applies_to": "elder_care",
+    "clause_type": "other",
+    "title": "Assignment of Insurance / Benefits",
+    "severity": 4,
+    "indicators": ["assign benefits", "Medicare", "long-term care insurance", "payable to facility"],
+    "why_risky": "Facility takes direct payment from LTC insurance or Medicare without family oversight. Can lead to billing disputes and delayed refunds.",
+    "counter": "Insurance payments flow to resident account first, then to facility. Family retains audit rights on all charges."
+  },
+  {
+    "id": "ec_service_bundling_forced",
+    "applies_to": "elder_care",
+    "clause_type": "care_plan_change",
+    "title": "Forced Service Bundles",
+    "severity": 3,
+    "indicators": ["package", "included services", "may not opt out"],
+    "why_risky": "Pay for services resident doesn't need (activities, salon, transportation) because they're bundled.",
+    "counter": "Allow opt-out of non-essential services with corresponding fee reduction. Itemize every charge."
+  },
+  {
+    "id": "ec_photo_waiver_medical",
+    "applies_to": "elder_care",
+    "clause_type": "other",
+    "title": "Waiver of Medical Records Access",
+    "severity": 4,
+    "indicators": ["medical records", "HIPAA", "facility's discretion", "release"],
+    "why_risky": "Family cannot access parent's medical records or incident reports. Hides falls, bed sores, medication errors.",
+    "counter": "Immediate family + POA get 24/7 access to all medical records and incident reports. HIPAA-compliant release automatic."
+  },
+  {
+    "id": "ec_lockout_non_payment",
+    "applies_to": "elder_care",
+    "clause_type": "discharge_rights",
+    "title": "Immediate Lockout for Non-Payment",
+    "severity": 5,
+    "indicators": ["non-payment", "lockout", "immediate", "no grace period"],
+    "why_risky": "Even 1-day late payment can trigger eviction. Dementia resident suddenly has no home. Illegal in many states but contracts try anyway.",
+    "counter": "30-day cure period before any eviction. Written notice + state-required procedures."
+  },
+  {
+    "id": "ec_transfer_trauma_waiver",
+    "applies_to": "elder_care",
+    "clause_type": "liability_cap",
+    "title": "Transfer Trauma Waiver",
+    "severity": 4,
+    "indicators": ["transfer trauma", "relocation", "waive claims"],
+    "why_risky": "Waives facility liability if forced moves (memory care, another facility) cause decline or death. Transfer trauma is a real medical phenomenon.",
+    "counter": "Strike waiver. Facility responsible for care continuity during any move."
+  },
+  {
+    "id": "ec_couples_separation",
+    "applies_to": "elder_care",
+    "clause_type": "discharge_rights",
+    "title": "Couples Can Be Separated",
+    "severity": 4,
+    "indicators": ["separate units", "care level", "different wings", "couples"],
+    "why_risky": "One spouse's care needs increase → they're moved to memory care while partner stays in independent living. Decades-married couples separated for convenience.",
+    "counter": "Guarantee couples can stay together with modified care plan. Never separate without mutual consent."
+  },
+  {
+    "id": "ec_activity_fee_surprise",
+    "applies_to": "elder_care",
+    "clause_type": "community_fee",
+    "title": "Surprise Activity / Amenity Fees",
+    "severity": 2,
+    "indicators": ["activities fee", "amenity fee", "additional charges"],
+    "why_risky": "Marketed as 'all-inclusive' but charges extra for outings, guest meals, salon, transportation.",
+    "counter": "Require written itemized fee schedule. Anything not listed is included in base rate."
+  },
+  {
+    "id": "ec_holdover_double_rate",
+    "applies_to": "elder_care",
+    "clause_type": "holding_fee",
+    "title": "Double Rate After Move-Out Notice",
+    "severity": 3,
+    "indicators": ["hold over", "150%", "200%", "after notice"],
+    "why_risky": "If family cannot move resident out by exact date (finding new facility is hard), facility charges 1.5-2x daily rate.",
+    "counter": "7-day grace period at regular rate. Then standard rate until move-out complete."
+  },
+  {
+    "id": "ec_personal_property_limit",
+    "applies_to": "elder_care",
+    "clause_type": "liability_cap",
+    "title": "Limited Liability for Personal Property",
+    "severity": 3,
+    "indicators": ["personal property", "$500 limit", "not responsible"],
+    "why_risky": "Lost hearing aids, dentures, jewelry, glasses are common. Facility refuses to replace.",
+    "counter": "Facility liable up to $5,000 for lost personal property. Residents issued locked drawer for valuables."
+  },
+  {
+    "id": "ec_room_change_discretion",
+    "applies_to": "elder_care",
+    "clause_type": "care_plan_change",
+    "title": "Room Change at Facility Discretion",
+    "severity": 3,
+    "indicators": ["room change", "sole discretion", "relocate within facility"],
+    "why_risky": "Facility moves resident to different room/unit without consent. Disruptive for dementia patients.",
+    "counter": "Room changes require 30-day notice + family consent, except emergency."
+  },
+  {
+    "id": "ec_payment_late_fee_excessive",
+    "applies_to": "elder_care",
+    "clause_type": "responsible_party",
+    "title": "Excessive Late Payment Fees",
+    "severity": 3,
+    "indicators": ["late fee", "10%", "penalty"],
+    "why_risky": "10% late fee on $5k/mo = $500 for being a day late. Compounds monthly.",
+    "counter": "Cap late fee at 5% or $50, whichever is less. 5-day grace period."
+  },
+  {
+    "id": "ec_binding_choice_of_law",
+    "applies_to": "elder_care",
+    "clause_type": "arbitration_waiver",
+    "title": "Out-of-State Choice of Law",
+    "severity": 3,
+    "indicators": ["choice of law", "governing law", "courts of"],
+    "why_risky": "Forces any dispute into facility's preferred state courts. Family cannot sue locally.",
+    "counter": "Disputes governed by resident's state law, in local courts."
+  },
+  {
+    "id": "ec_care_assessment_by_facility",
+    "applies_to": "elder_care",
+    "clause_type": "care_escalation",
+    "title": "Initial Care Assessment by Facility Alone",
+    "severity": 3,
+    "indicators": ["care assessment", "facility's assessment", "evaluation"],
+    "why_risky": "Facility's own nurse evaluates parent → has incentive to place at higher care level. Family paying more than needed from day one.",
+    "counter": "Require outside geriatrician or social worker to perform initial assessment. Family present during evaluation."
+  },
+  {
+    "id": "ec_no_refund_deposit",
+    "applies_to": "elder_care",
+    "clause_type": "community_fee",
+    "title": "Non-Refundable Admission Deposit",
+    "severity": 3,
+    "indicators": ["admission deposit", "non-refundable", "processing"],
+    "why_risky": "Separate $500-$2,000 'deposit' distinct from community fee. Also non-refundable.",
+    "counter": "Fully refundable if family cancels within 30 days of signing or if assessment reveals facility cannot meet needs."
+  },
+  {
+    "id": "ec_outside_food_ban",
+    "applies_to": "elder_care",
+    "clause_type": "third_party_restriction",
+    "title": "Ban on Outside Food or Caregivers",
+    "severity": 3,
+    "indicators": ["outside food", "private caregiver", "not permitted"],
+    "why_risky": "Family cannot bring home-cooked meals or hire private companion aide. Forces dependency on facility.",
+    "counter": "Family can bring food, hire licensed private caregivers. Facility provides reasonable accommodation."
+  },
+  {
+    "id": "ec_rent_survives_vacancy",
+    "applies_to": "elder_care",
+    "clause_type": "move_out_notice",
+    "title": "Rent Continues Until Room Re-Rented",
+    "severity": 5,
+    "indicators": ["until re-rented", "mitigation", "lease continues"],
+    "why_risky": "Family pays rent AFTER move-out/death until facility re-rents the unit. Could be months. Classic commercial lease trap in care contract.",
+    "counter": "Rent ends on move-out or death, with 30-day notice maximum. Facility bears re-renting risk."
   }
 ]

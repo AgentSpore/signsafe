@@ -8,6 +8,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 ClauseType = Literal[
+    # Commercial lease types
     "personal_guarantee",
     "auto_renewal",
     "cam_charges",
@@ -20,6 +21,19 @@ ClauseType = Literal[
     "security_deposit",
     "rent_escalation",
     "maintenance_shift",
+    # Elder care / assisted living types
+    "care_escalation",
+    "community_fee",
+    "med_management",
+    "move_out_notice",
+    "medicaid_spend_down",
+    "third_party_restriction",
+    "arbitration_waiver",
+    "responsible_party",
+    "liability_cap",
+    "discharge_rights",
+    "holding_fee",
+    "care_plan_change",
     "other",
 ]
 

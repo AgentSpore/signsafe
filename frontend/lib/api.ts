@@ -1,6 +1,7 @@
 export type Severity = 1 | 2 | 3 | 4 | 5;
 
 export type ClauseType =
+  // Commercial lease
   | "personal_guarantee"
   | "auto_renewal"
   | "cam_charges"
@@ -13,6 +14,19 @@ export type ClauseType =
   | "security_deposit"
   | "rent_escalation"
   | "maintenance_shift"
+  // Elder care
+  | "care_escalation"
+  | "community_fee"
+  | "med_management"
+  | "move_out_notice"
+  | "medicaid_spend_down"
+  | "third_party_restriction"
+  | "arbitration_waiver"
+  | "responsible_party"
+  | "liability_cap"
+  | "discharge_rights"
+  | "holding_fee"
+  | "care_plan_change"
   | "other";
 
 export interface RiskClause {
