@@ -13,7 +13,7 @@ export function RiskScore({
 }) {
   const { t } = useLocale();
   const [display, setDisplay] = useState(0);
-  const REC_META: Record<Recommendation, { label: string; color: string; body: string }> = {
+  const REC_META: Record<string, { label: string; color: string; body: string }> = {
     SAFE_TO_SIGN: {
       label: t("rec.safe"),
       color: "var(--color-accent-signal)",
@@ -29,8 +29,23 @@ export function RiskScore({
       color: "var(--color-risk-deal-breaker)",
       body: t("rec.walkAwayBody"),
     },
+    LOOKS_FAIR: {
+      label: t("rec.fair"),
+      color: "var(--color-accent-signal)",
+      body: t("rec.fairBody"),
+    },
+    REVIEW_CAREFULLY: {
+      label: t("rec.review"),
+      color: "var(--color-risk-warning)",
+      body: t("rec.reviewBody"),
+    },
+    DISPUTE_NOW: {
+      label: t("rec.dispute"),
+      color: "var(--color-risk-deal-breaker)",
+      body: t("rec.disputeBody"),
+    },
   };
-  const meta = REC_META[recommendation];
+  const meta = REC_META[recommendation] || REC_META.NEGOTIATE_FIRST;
 
   useEffect(() => {
     let raf = 0;

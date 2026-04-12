@@ -34,6 +34,19 @@ ClauseType = Literal[
     "discharge_rights",
     "holding_fee",
     "care_plan_change",
+    # Medical bill / EOB types
+    "balance_billing",
+    "duplicate_charge",
+    "upcoding",
+    "unbundling",
+    "facility_fee",
+    "missing_adjustment",
+    "stale_billing",
+    "collection_markup",
+    "phantom_charge",
+    "modifier_abuse",
+    "surprise_provider",
+    "or_surcharge",
     "other",
 ]
 

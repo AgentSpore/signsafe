@@ -7,6 +7,7 @@ export type Industry =
   | "fitness"
   | "warehouse"
   | "elder_care"
+  | "medical_bill"
   | "other";
 
 export const COMMERCIAL_INDUSTRIES: { id: Industry; label: string; hint: string }[] = [
@@ -29,6 +30,16 @@ export const ELDER_CARE_INDUSTRY: { id: Industry; label: string; hint: string } 
   hint: "Senior care, memory care, CCRC",
 };
 
+export const MEDICAL_BILL_INDUSTRY: { id: Industry; label: string; hint: string } = {
+  id: "medical_bill",
+  label: "Medical Bill",
+  hint: "Hospital bills, EOBs, provider invoices",
+};
+
 export function isElderCare(industry: Industry | null): boolean {
   return industry === "elder_care";
+}
+
+export function isMedicalBill(industry: Industry | string | null): boolean {
+  return industry === "medical_bill";
 }

@@ -1,4 +1,4 @@
-"""Stateless lease analysis — no persistence."""
+"""Stateless document analysis — no persistence."""
 
 from __future__ import annotations
 
@@ -6,9 +6,15 @@ from loguru import logger
 
 from signsafe.core.config import settings
 from signsafe.schemas.document import AnalysisResult
-from signsafe.schemas.industry import get_focus
+from signsafe.schemas.industry import get_focus, is_medical_bill
 from signsafe.services.agents import lease_agent, make_model
 from signsafe.services.pdf_service import ExtractedDocument
+
+
+def _doc_label(industry: str | None) -> str:
+    if is_medical_bill(industry):
+        return "medical bill"
+    return "document"
 
 
 class AnalysisService:
@@ -18,18 +24,19 @@ class AnalysisService:
         self, extracted: ExtractedDocument, industry: str | None = None
     ) -> AnalysisResult:
         focus = get_focus(industry)
+        label = _doc_label(industry)
         ocr_note = (
             "\n\nNOTE: This text was extracted via OCR from a scanned document — "
-            "minor character errors may exist; focus on substantive clauses.\n"
+            "minor character errors may exist; focus on substantive content.\n"
             if extracted.used_ocr
             else ""
         )
         prompt = (
-            f"Analyze this commercial lease and return the structured forensics report.\n\n"
+            f"Analyze this {label} and return the structured forensics report.\n\n"
             f"INDUSTRY CONTEXT: {focus}\n{ocr_note}\n"
-            f"LEASE TEXT ({extracted.num_pages} pages):\n\n{extracted.full_text[:60000]}"
+            f"DOCUMENT TEXT ({extracted.num_pages} pages):\n\n{extracted.full_text[:60000]}"
         )
-        logger.info("Running lease agent on {} pages", extracted.num_pages)
+        logger.info("Running forensics agent on {} pages ({})", extracted.num_pages, label)
         last_exc: Exception | None = None
         for model_name in settings.fallback_models:
             try:

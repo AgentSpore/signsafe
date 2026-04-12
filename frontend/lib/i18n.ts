@@ -21,6 +21,8 @@ export const UI_EN: Record<string, string> = {
   "nav.history": "History",
   "nav.elderCare": "Assisted Living",
   "nav.commercial": "Commercial Lease",
+  "nav.medicalBill": "Medical Bill",
+  "nav.hub": "All Tools",
 
   // Hero (home page)
   "hero.meta.vol": "VOL. 01 / 2026",
@@ -63,6 +65,8 @@ export const UI_EN: Record<string, string> = {
   "industry.warehouse.hint": "Industrial, logistics",
   "industry.elder_care": "Assisted Living",
   "industry.elder_care.hint": "Senior care, memory care, CCRC",
+  "industry.medical_bill": "Medical Bill",
+  "industry.medical_bill.hint": "Hospital bills, EOBs, provider invoices",
   "industry.other": "Other",
   "industry.other.hint": "General commercial",
 
@@ -77,7 +81,7 @@ export const UI_EN: Record<string, string> = {
   "upload.timeHint": "USUALLY TAKES 20-30 SECONDS",
   "upload.whatToExpect": "WHAT HAPPENS NEXT",
   "upload.step1": "PDF parsed in memory (no server storage)",
-  "upload.step2": "LLM cross-references 74 predatory patterns",
+  "upload.step2": "LLM cross-references 98 predatory patterns",
   "upload.step3": "You get a risk score + negotiation counter-language",
 
   "demo.try": "TRY LIVE DEMO (NO UPLOAD) →",
@@ -190,11 +194,11 @@ export const UI_EN: Record<string, string> = {
   "sync.emailSent": "Magic link sent — check your email",
 
   // Footer
-  "footer.tagline": "LEASE FORENSICS · 2026 · STATELESS",
+  "footer.tagline": "DOCUMENT FORENSICS · 2026 · STATELESS",
   "footer.createdOn": "CREATED ON",
   "footer.agentspore": "AGENTSPORE ↗",
   "footer.disclaimer":
-    "EDUCATIONAL TOOL · NOT LEGAL ADVICE · CONSULT A LICENSED ATTORNEY FOR CRITICAL DECISIONS",
+    "EDUCATIONAL TOOL · NOT LEGAL OR MEDICAL ADVICE · CONSULT A LICENSED PROFESSIONAL FOR CRITICAL DECISIONS",
 
   // Home page path switcher
   "home.pathSwitcher.label": "WHAT ARE YOU REVIEWING?",
@@ -241,6 +245,73 @@ export const UI_EN: Record<string, string> = {
     "Walk away. Find a different facility. This clause will hurt your parent.",
   "elder.scale.criticalDesc":
     "Red flag. Require amendment before move-in day.",
+
+  // Medical bill landing page
+  "medbill.meta.label": "MEDICAL BILL FORENSICS",
+  "medbill.meta.vol": "VOL. 01 / 2026",
+  "medbill.meta.for": "FOR PATIENTS & FAMILIES",
+  "medbill.stats.body": "BILLING ERROR PATTERNS DETECTED",
+  "medbill.privacy.body":
+    "Stateless. Your bill is analyzed in memory and discarded. Results saved only in your browser.",
+  "medbill.heading.line1": "BILLED",
+  "medbill.heading.line2": "$1,440",
+  "medbill.heading.dont": "DON'T",
+  "medbill.heading.line3": "PAY BLIND.",
+  "medbill.lead":
+    "Hospital bills hide duplicate charges, upcoded visits, and illegal balance billing behind confusing CPT codes. We find them in",
+  "medbill.whatWeFind": "WHAT WE FIND",
+  "medbill.find.duplicates": "Duplicate charges on same date",
+  "medbill.find.upcoding": "Upcoded visit levels ($200+ overcharge)",
+  "medbill.find.unbundling": "Unbundled lab panels ($45 → $400+)",
+  "medbill.find.balanceBilling": "Illegal balance billing (No Surprises Act)",
+  "medbill.find.phantom": "Phantom charges for services never rendered",
+  "medbill.upload.drop": "Drop your hospital bill, EOB, or itemized statement.",
+  "medbill.upload.limits": "Up to 10MB · processed in memory · never stored on server.",
+  "medbill.cta.backToHub": "← BACK TO ALL TOOLS",
+
+  // Medical bill how it works
+  "medbill.how.title": "Three steps. Zero data retention. One clear dispute plan.",
+  "medbill.how.extractBody":
+    "We parse every page of your bill, EOB, or itemized statement. Line items, CPT codes, charges.",
+  "medbill.how.forensicsBody":
+    "Free open-source LLMs cross-reference 25 billing error patterns and Medicare benchmarks.",
+  "medbill.how.verdictBody":
+    "Error list, dollar impact, dispute letter draft, phone script. Saved to your browser only.",
+
+  // Medical bill recommendations
+  "rec.fair": "LOOKS FAIR",
+  "rec.fairBody": "No major errors detected. Review highlighted notes then file if needed.",
+  "rec.review": "REVIEW CAREFULLY",
+  "rec.reviewBody":
+    "Potential errors found. Request itemized bill and compare with your EOB before paying.",
+  "rec.dispute": "DISPUTE NOW",
+  "rec.disputeBody": "Significant overcharges detected. Do not pay — dispute with the billing department.",
+
+  // Hub page
+  "hub.meta.label": "DOCUMENT FORENSICS",
+  "hub.meta.vol": "VOL. 01 / 2026",
+  "hub.heading.line1": "DON'T SIGN.",
+  "hub.heading.line2": "DON'T PAY.",
+  "hub.heading.line3": "BLIND.",
+  "hub.lead": "AI reads the fine print you can't afford a lawyer to review. Upload any document — lease, care contract, medical bill.",
+  "hub.card.lease.label": "CONTRACT FORENSICS",
+  "hub.card.lease.title": "Commercial Lease",
+  "hub.card.lease.hint": "First-time SMB tenants. 40 predatory patterns. 7 industries.",
+  "hub.card.lease.cta": "ANALYZE LEASE →",
+  "hub.card.elder.label": "ELDER CARE FORENSICS",
+  "hub.card.elder.title": "Assisted Living",
+  "hub.card.elder.hint": "Families placing a parent. 34 elder care traps. Fee escalations.",
+  "hub.card.elder.cta": "ANALYZE CONTRACT →",
+  "hub.card.medbill.label": "MEDICAL BILL AUDIT",
+  "hub.card.medbill.title": "Medical Bill",
+  "hub.card.medbill.hint": "Hospital bills, EOBs. 25 billing error patterns. Dispute letters.",
+  "hub.card.medbill.cta": "CHECK BILL →",
+  "hub.stats.total": "98",
+  "hub.stats.body": "TOTAL PATTERNS ACROSS 3 VERTICALS",
+
+  // Analysis view — medical bill labels
+  "analysis.disputeLetter": "⚡ DRAFT DISPUTE LETTER",
+  "analysis.anotherBill": "← CHECK ANOTHER BILL",
 
   // 404 / not found
   "notFound.header": "ERROR 404 / NOT IN LOCAL STORAGE",

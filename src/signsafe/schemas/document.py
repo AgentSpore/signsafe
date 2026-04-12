@@ -8,7 +8,12 @@ from pydantic import BaseModel, Field
 
 from signsafe.schemas.clause import RiskClause
 
-Recommendation = Literal["SAFE_TO_SIGN", "NEGOTIATE_FIRST", "WALK_AWAY"]
+Recommendation = Literal[
+    # Contract recommendations
+    "SAFE_TO_SIGN", "NEGOTIATE_FIRST", "WALK_AWAY",
+    # Medical bill recommendations
+    "LOOKS_FAIR", "REVIEW_CAREFULLY", "DISPUTE_NOW",
+]
 
 
 class AnalysisResult(BaseModel):

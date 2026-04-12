@@ -699,5 +699,246 @@
     "indicators": ["until re-rented", "mitigation", "lease continues"],
     "why_risky": "Family pays rent AFTER move-out/death until facility re-rents the unit. Could be months. Classic commercial lease trap in care contract.",
     "counter": "Rent ends on move-out or death, with 30-day notice maximum. Facility bears re-renting risk."
+  },
+
+  {
+    "id": "mb_duplicate_em",
+    "applies_to": "medical_bill",
+    "clause_type": "duplicate_charge",
+    "title": "Duplicate E&M Charge on Same Date",
+    "severity": 5,
+    "indicators": ["99213", "99214", "99215", "evaluation and management", "office visit"],
+    "why_risky": "Same E&M visit code billed twice for one encounter. Overcharge typically $150-$400.",
+    "counter": "Request itemized bill. Demand reversal of duplicate charge and credit memo. Reference CPT billing guidelines."
+  },
+  {
+    "id": "mb_duplicate_facility",
+    "applies_to": "medical_bill",
+    "clause_type": "duplicate_charge",
+    "title": "Duplicate Facility Fee",
+    "severity": 4,
+    "indicators": ["facility fee", "facility charge", "hospital charge"],
+    "why_risky": "Facility fee billed twice or alongside provider fee for same service. Can add $500-$2,000 in error.",
+    "counter": "Dispute duplicate facility charge. Only one facility fee per encounter is billable."
+  },
+  {
+    "id": "mb_upcoded_em",
+    "applies_to": "medical_bill",
+    "clause_type": "upcoding",
+    "title": "Upcoded Office Visit Level",
+    "severity": 5,
+    "indicators": ["99215", "99214", "level 5", "level 4", "comprehensive"],
+    "why_risky": "A routine 15-minute visit billed as complex Level 4-5 E&M. Difference between Level 3 ($100) and Level 5 ($300+) is significant. Upcoding is the #1 billing fraud type.",
+    "counter": "Request medical records showing documentation justifying this visit level. If notes show a simple visit, demand downcode to appropriate level."
+  },
+  {
+    "id": "mb_upcoded_er",
+    "applies_to": "medical_bill",
+    "clause_type": "upcoding",
+    "title": "Upcoded Emergency Room Level",
+    "severity": 5,
+    "indicators": ["99285", "99284", "ER level 5", "ER level 4", "emergency department"],
+    "why_risky": "ER visit billed at highest severity (Level 5: $800+) for a non-critical presentation (e.g., sprained ankle). Many ERs default to Level 4-5 for all visits.",
+    "counter": "Request clinical records. If triage notes show non-emergent presentation, dispute with insurer using actual clinical criteria."
+  },
+  {
+    "id": "mb_unbundled_cmp",
+    "applies_to": "medical_bill",
+    "clause_type": "unbundling",
+    "title": "Unbundled Lab Panel (CMP/BMP)",
+    "severity": 5,
+    "indicators": ["comprehensive metabolic", "basic metabolic", "80053", "80048", "glucose", "sodium", "potassium"],
+    "why_risky": "A Comprehensive Metabolic Panel (CPT 80053, ~$45) split into 14 individual tests billed at $30-$50 each. Total can exceed $400 for a $45 panel.",
+    "counter": "Demand rebilling as the bundled panel code (80053 or 80048). CMS NCCI edits prohibit unbundling when all components are ordered together."
+  },
+  {
+    "id": "mb_unbundled_cbc",
+    "applies_to": "medical_bill",
+    "clause_type": "unbundling",
+    "title": "Unbundled CBC Panel",
+    "severity": 4,
+    "indicators": ["complete blood count", "85025", "85027", "hemoglobin", "hematocrit", "platelet"],
+    "why_risky": "Complete Blood Count (CPT 85025, ~$25) split into individual components. Overcharge of $100-$200.",
+    "counter": "Request rebilling under bundled CBC code. Reference NCCI bundling edits."
+  },
+  {
+    "id": "mb_balance_bill_emergency",
+    "applies_to": "medical_bill",
+    "clause_type": "balance_billing",
+    "title": "Balance Billing for Emergency Services",
+    "severity": 5,
+    "indicators": ["balance", "out-of-network", "patient responsibility", "emergency", "ER"],
+    "why_risky": "You're charged the difference between provider's rate and insurance allowance for emergency care. The No Surprises Act (2022) PROHIBITS this for emergency services. Overcharge can be $1,000-$10,000+.",
+    "counter": "Cite No Surprises Act (Public Law 117-169). Emergency services cannot be balance-billed regardless of network status. File complaint with CMS if provider refuses."
+  },
+  {
+    "id": "mb_balance_bill_ancillary",
+    "applies_to": "medical_bill",
+    "clause_type": "balance_billing",
+    "title": "Balance Bill from Ancillary Provider",
+    "severity": 4,
+    "indicators": ["anesthesiologist", "radiologist", "pathologist", "out-of-network", "assistant surgeon"],
+    "why_risky": "You chose an in-network hospital but got an out-of-network anesthesiologist/radiologist you didn't choose. Balance bill can be $2,000-$5,000. No Surprises Act covers this.",
+    "counter": "Dispute under No Surprises Act — ancillary providers at in-network facilities cannot balance-bill. Request qualifying payment amount from insurer."
+  },
+  {
+    "id": "mb_facility_fee_outpatient",
+    "applies_to": "medical_bill",
+    "clause_type": "facility_fee",
+    "title": "Surprise Facility Fee for Outpatient Visit",
+    "severity": 4,
+    "indicators": ["facility fee", "hospital outpatient", "HOPD", "site of service"],
+    "why_risky": "Your doctor's office was acquired by a hospital. Same doctor, same room, but now there's a $200-$2,000 'facility fee' on top of the provider charge. Often no advance disclosure.",
+    "counter": "Request Good Faith Estimate if uninsured. Check state facility fee disclosure laws. Ask if same procedure available at independent (non-hospital) office."
+  },
+  {
+    "id": "mb_phantom_anesthesia",
+    "applies_to": "medical_bill",
+    "clause_type": "phantom_charge",
+    "title": "Inflated Anesthesia Time",
+    "severity": 5,
+    "indicators": ["anesthesia", "time units", "minutes", "01999", "01996"],
+    "why_risky": "Anesthesia billed at 3+ hours for a 45-minute procedure. Each 15-min unit costs $50-$150. Inflating from 3 units to 12 units = $450-$1,350 overcharge.",
+    "counter": "Request OR time log and anesthesia start/stop times from medical records. Compare billed units to actual documented time."
+  },
+  {
+    "id": "mb_phantom_consult",
+    "applies_to": "medical_bill",
+    "clause_type": "phantom_charge",
+    "title": "Phantom Consultation Charge",
+    "severity": 5,
+    "indicators": ["consultation", "99243", "99244", "99245", "specialist"],
+    "why_risky": "A specialist 'consultation' billed but the specialist never actually saw or examined the patient. Common in hospital settings where chart reviews are billed as consults.",
+    "counter": "Request documentation of the consultation — date, time, findings, and specialist signature. If no face-to-face encounter occurred, demand reversal."
+  },
+  {
+    "id": "mb_missing_ins_credit",
+    "applies_to": "medical_bill",
+    "clause_type": "missing_adjustment",
+    "title": "Insurance Payment Not Applied",
+    "severity": 4,
+    "indicators": ["patient responsibility", "amount due", "insurance", "adjustment", "contractual"],
+    "why_risky": "Bill shows full chargemaster price without insurance contractual adjustment. You're seeing $5,000 when your actual responsibility after insurance is $500. Contact insurer for EOB.",
+    "counter": "Request EOB from your insurance. Compare 'patient responsibility' on EOB vs provider bill. If they differ, send EOB to provider billing department."
+  },
+  {
+    "id": "mb_missing_copay_credit",
+    "applies_to": "medical_bill",
+    "clause_type": "missing_adjustment",
+    "title": "Copay/Deductible Already Paid Not Credited",
+    "severity": 3,
+    "indicators": ["copay", "co-pay", "deductible", "paid at time of service"],
+    "why_risky": "You paid a copay at the front desk but it's not reflected on the bill. You're being asked to pay it again. Common when payment systems don't sync.",
+    "counter": "Provide receipt or credit card statement showing copay payment. Request credit and updated statement."
+  },
+  {
+    "id": "mb_stale_bill_12mo",
+    "applies_to": "medical_bill",
+    "clause_type": "stale_billing",
+    "title": "Bill Sent Over 12 Months After Service",
+    "severity": 4,
+    "indicators": ["date of service", "collection", "past due", "final notice"],
+    "why_risky": "Bill arrives 12+ months after service with no prior notice. Many states have timely filing requirements (typically 90 days to 1 year for in-network). Late bills may be unenforceable.",
+    "counter": "Check your state's timely filing/billing deadline laws. If provider missed the deadline, you may not owe the balance. Request proof of timely filing with your insurer."
+  },
+  {
+    "id": "mb_stale_no_prior_notice",
+    "applies_to": "medical_bill",
+    "clause_type": "stale_billing",
+    "title": "First Notice Is Collection Agency Letter",
+    "severity": 5,
+    "indicators": ["collection", "debt collector", "third party", "agency", "credit report"],
+    "why_risky": "You never received the original bill — first contact is from a collection agency. Under FDCPA, you have 30 days to dispute. The debt may be invalid if provider never sent original bill.",
+    "counter": "Send written dispute within 30 days citing Fair Debt Collection Practices Act. Request validation of debt including original bill, dates, and proof you were billed at correct address."
+  },
+  {
+    "id": "mb_collection_markup",
+    "applies_to": "medical_bill",
+    "clause_type": "collection_markup",
+    "title": "Collection Agency Markup Over Original",
+    "severity": 4,
+    "indicators": ["collection", "interest", "fees", "penalties", "added charges"],
+    "why_risky": "Collection agency demands 30-40% more than the original bill — added 'collection fees' or 'interest.' Many states prohibit this for medical debt.",
+    "counter": "Request original itemized bill amount. Many states prohibit interest/fees on medical debt. Negotiate directly with original provider to recall from collections."
+  },
+  {
+    "id": "mb_modifier_25_abuse",
+    "applies_to": "medical_bill",
+    "clause_type": "modifier_abuse",
+    "title": "Modifier -25 Abuse (Separate E&M)",
+    "severity": 4,
+    "indicators": ["modifier 25", "-25", "significant separately identifiable"],
+    "why_risky": "Provider bills an office visit (E&M) WITH a procedure on same day using modifier -25, inflating the charge by $100-$300. Often the E&M was just the normal pre-procedure assessment.",
+    "counter": "Request documentation showing the E&M was truly separate from the procedure. If the visit was solely for the procedure, the -25 modifier is inappropriate."
+  },
+  {
+    "id": "mb_modifier_59_unbundle",
+    "applies_to": "medical_bill",
+    "clause_type": "modifier_abuse",
+    "title": "Modifier -59 Used to Bypass Bundling",
+    "severity": 4,
+    "indicators": ["modifier 59", "-59", "distinct procedural service"],
+    "why_risky": "Modifier -59 used to bypass CMS National Correct Coding Initiative (NCCI) edits, allowing separately billing procedures that should be bundled. Overcharge varies by procedure.",
+    "counter": "Request operative notes. If procedures were performed through same incision/approach at same time, -59 is inappropriate. File with insurer for rebundling."
+  },
+  {
+    "id": "mb_or_surcharge_exam_room",
+    "applies_to": "medical_bill",
+    "clause_type": "or_surcharge",
+    "title": "Operating Room Charge for Exam Room Procedure",
+    "severity": 4,
+    "indicators": ["operating room", "OR fee", "surgical suite", "procedure room"],
+    "why_risky": "Minor procedure (skin biopsy, injection, wound care) performed in an exam room but billed with OR fees. OR surcharge can add $1,000-$5,000.",
+    "counter": "Request the place of service code on the claim. If procedure was in exam room (POS 11), OR charges are inappropriate. Compare to ASC/office rates."
+  },
+  {
+    "id": "mb_surprise_assistant_surgeon",
+    "applies_to": "medical_bill",
+    "clause_type": "surprise_provider",
+    "title": "Surprise Assistant Surgeon Bill",
+    "severity": 4,
+    "indicators": ["assistant surgeon", "modifier 80", "-80", "surgical assist"],
+    "why_risky": "An assistant surgeon you never met or consented to bills separately — often out-of-network. Charges range $1,000-$5,000+.",
+    "counter": "No Surprises Act covers non-consented ancillary providers. Dispute with insurer. If at in-network facility, you're protected from balance billing."
+  },
+  {
+    "id": "mb_surprise_anesthesiologist",
+    "applies_to": "medical_bill",
+    "clause_type": "surprise_provider",
+    "title": "Out-of-Network Anesthesiologist at In-Network Facility",
+    "severity": 5,
+    "indicators": ["anesthesiologist", "out-of-network", "CRNA", "anesthesia provider"],
+    "why_risky": "You chose an in-network hospital but the anesthesiologist is out-of-network. Bill can be $3,000-$10,000. Federal No Surprises Act directly covers this scenario.",
+    "counter": "Cite No Surprises Act. File with insurer to apply in-network cost-sharing. Provider must accept qualifying payment amount. File CMS complaint if refused."
+  },
+  {
+    "id": "mb_chargemaster_price",
+    "applies_to": "medical_bill",
+    "clause_type": "missing_adjustment",
+    "title": "Billed at Chargemaster Rate Without Adjustment",
+    "severity": 5,
+    "indicators": ["charge", "list price", "gross charge", "total charges"],
+    "why_risky": "Uninsured or self-pay patient billed at full chargemaster rate (often 3-10x Medicare rate). A $500 procedure at Medicare rate billed as $3,000-$5,000.",
+    "counter": "Request self-pay/uninsured discount (most hospitals offer 40-60% off). Ask for Medicare-equivalent rate. Reference Hospital Price Transparency Rule requiring published rates."
+  },
+  {
+    "id": "mb_phantom_supply",
+    "applies_to": "medical_bill",
+    "clause_type": "phantom_charge",
+    "title": "Inflated or Phantom Medical Supply Charges",
+    "severity": 3,
+    "indicators": ["supply", "medical supplies", "surgical supplies", "kit charge"],
+    "why_risky": "Generic supplies (gloves, gauze, syringes) billed at 10-50x retail cost. A $0.50 pair of gloves charged as $15. Common in hospital itemized bills.",
+    "counter": "Request itemized bill with specific supply descriptions. Compare charges against retail prices. Negotiate reduction for obviously inflated supply charges."
+  },
+  {
+    "id": "mb_skin_to_skin_double",
+    "applies_to": "medical_bill",
+    "clause_type": "duplicate_charge",
+    "title": "Duplicate Delivery Room Charges (OB)",
+    "severity": 4,
+    "indicators": ["delivery", "labor", "vaginal delivery", "cesarean", "59400", "59510"],
+    "why_risky": "Global obstetric code (which includes prenatal, delivery, and postpartum) billed AND separate charges for labor/delivery room, creating duplicates. Overcharge $2,000-$5,000.",
+    "counter": "If global OB code was billed, delivery room charges are included. Request rebilling to remove duplicate delivery charges."
   }
 ]

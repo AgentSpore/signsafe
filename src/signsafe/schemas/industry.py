@@ -13,6 +13,7 @@ Industry = Literal[
     "fitness",
     "warehouse",
     "elder_care",
+    "medical_bill",
     "other",
 ]
 
@@ -29,6 +30,8 @@ COMMERCIAL_INDUSTRIES: set[str] = {
 }
 
 ELDER_CARE_INDUSTRIES: set[str] = {"elder_care"}
+
+MEDICAL_BILL_INDUSTRIES: set[str] = {"medical_bill"}
 
 
 INDUSTRY_FOCUS: dict[str, str] = {
@@ -108,6 +111,42 @@ INDUSTRY_FOCUS: dict[str, str] = {
         "Use plain, direct language an adult child (not lawyer) can understand. Express "
         "dollar impact clearly. This family is scared and overwhelmed — be their advocate."
     ),
+    "medical_bill": (
+        "MEDICAL BILL / EOB / ITEMIZED STATEMENT REVIEW. This is NOT a contract — "
+        "this is a hospital bill, insurance Explanation of Benefits (EOB), or provider "
+        "invoice. The patient or their family member needs help understanding charges "
+        "and finding errors. Pay extra attention to:\n"
+        "- DUPLICATE CHARGES: same CPT code billed twice on same date of service.\n"
+        "- UPCODING: E&M visit level inflated (Level 5 billed for a routine 15-min visit "
+        "that should be Level 3). Can add $200-$500 per visit.\n"
+        "- UNBUNDLING: lab panel (CMP/BMP) split into individual tests; bundled procedure "
+        "components billed separately. A $45 panel becomes $400+.\n"
+        "- BALANCE BILLING: patient billed for difference between provider charge and "
+        "insurance allowance, especially for emergency/out-of-network care. May violate "
+        "No Surprises Act (2022) for emergency services and certain other scenarios.\n"
+        "- FACILITY FEES: surprise location-based fee on top of provider fee for outpatient "
+        "procedures done in hospital-owned clinic. Often $500-$2,000+ with no warning.\n"
+        "- PHANTOM CHARGES: services listed that were never performed (e.g., 3hr anesthesia "
+        "billed for 45-min procedure; consultation that never happened).\n"
+        "- MISSING INSURANCE ADJUSTMENTS: insurer paid but credit not applied — patient sees "
+        "full billed amount instead of patient responsibility.\n"
+        "- STALE BILLING: bill for service >12 months old sent directly without prior notice. "
+        "Many states have timely filing limits.\n"
+        "- COLLECTION MARKUP: bill sent to collection agency with 30-40% markup over original.\n"
+        "- MODIFIER ABUSE: incorrect CPT modifiers (-25, -59, -76) used to bypass bundling "
+        "edits and inflate reimbursement.\n"
+        "- OPERATING ROOM SURCHARGE: facility charges OR time for a procedure done in exam room.\n"
+        "- SURPRISE PROVIDER: assistant surgeon or anesthesiologist not chosen by patient "
+        "billed separately at out-of-network rates.\n\n"
+        "For each error found:\n"
+        "- Quote the EXACT line item or charge description from the document.\n"
+        "- Estimate dollar overcharge when possible.\n"
+        "- Cite the patient protection law that applies (No Surprises Act, state balance "
+        "billing law, CMS timely filing, Fair Debt Collection Practices Act).\n"
+        "- Provide dispute language the patient can use in a letter or phone call.\n\n"
+        "Use plain English. The reader is scared and overwhelmed by medical jargon. "
+        "Express every dollar impact clearly. Be their advocate."
+    ),
     "other": "General commercial tenant. Apply standard forensic review.",
 }
 
@@ -120,3 +159,7 @@ def get_focus(industry: str | None) -> str:
 
 def is_elder_care(industry: str | None) -> bool:
     return (industry or "").lower() in ELDER_CARE_INDUSTRIES
+
+
+def is_medical_bill(industry: str | None) -> bool:
+    return (industry or "").lower() in MEDICAL_BILL_INDUSTRIES

@@ -10,7 +10,7 @@ import { LocaleSwitcher } from "@/components/locale-switcher";
 import { useLocale } from "@/components/locale-provider";
 import { SiteFooter } from "@/components/site-footer";
 
-export default function ElderCarePage() {
+export default function MedicalBillPage() {
   const router = useRouter();
   const { t } = useLocale();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -27,7 +27,7 @@ export default function ElderCarePage() {
     setProgress(5);
     try {
       const pdfBuf = await file.arrayBuffer();
-      for await (const ev of streamAnalysis(file, "elder_care")) {
+      for await (const ev of streamAnalysis(file, "medical_bill")) {
         setStage(ev.stage);
         setProgress(ev.progress);
         if (ev.stage === "done" && ev.data) {
@@ -64,8 +64,8 @@ export default function ElderCarePage() {
             <Link href="/lease" className="hidden md:inline hover:text-[var(--color-ink-primary)] transition">
               {t("nav.commercial")}
             </Link>
-            <Link href="/medical-bill" className="hidden md:inline text-[var(--color-accent-signal)] hover:text-[var(--color-ink-primary)] transition">
-              {t("nav.medicalBill")}
+            <Link href="/elder-care" className="hidden md:inline hover:text-[var(--color-ink-primary)] transition">
+              {t("nav.elderCare")}
             </Link>
             <a href="#how" className="hidden md:inline hover:text-[var(--color-ink-primary)] transition">
               {t("nav.how")}
@@ -83,24 +83,24 @@ export default function ElderCarePage() {
           <aside className="col-span-12 md:col-span-3 space-y-8 reveal-up">
             <div>
               <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)]">
-                {t("elder.meta.label")}
+                {t("medbill.meta.label")}
               </div>
               <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)]">
-                {t("elder.meta.vol")}
+                {t("medbill.meta.vol")}
               </div>
             </div>
             <div className="h-px bg-[var(--color-divider)]" />
             <div className="font-mono text-[10px] tracking-[0.15em] uppercase text-[var(--color-ink-secondary)] leading-relaxed">
-              {t("elder.meta.for")}
+              {t("medbill.meta.for")}
             </div>
             <div className="h-px bg-[var(--color-divider)]" />
             <div className="space-y-2">
               <div className="font-mono text-[10px] tracking-widest text-[var(--color-ink-tertiary)]">
                 {t("hero.stats.label")}
               </div>
-              <div className="font-display text-4xl">34</div>
+              <div className="font-display text-4xl">25</div>
               <div className="font-mono text-[10px] text-[var(--color-ink-secondary)]">
-                {t("elder.stats.body")}
+                {t("medbill.stats.body")}
               </div>
             </div>
             <div className="h-px bg-[var(--color-divider)]" />
@@ -109,7 +109,7 @@ export default function ElderCarePage() {
                 {t("hero.privacy.label")}
               </div>
               <div className="font-body text-xs text-[var(--color-ink-secondary)] leading-relaxed">
-                {t("elder.privacy.body")}
+                {t("medbill.privacy.body")}
               </div>
             </div>
             <div className="h-px bg-[var(--color-divider)]" />
@@ -117,21 +117,21 @@ export default function ElderCarePage() {
               href="/"
               className="block font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)] hover:text-[var(--color-accent-signal)] transition"
             >
-              {t("elder.cta.backToCommercial")}
+              {t("medbill.cta.backToHub")}
             </Link>
           </aside>
 
           <div className="col-span-12 md:col-span-9">
             <h1 className="font-display font-normal text-[clamp(3.5rem,10vw,8.5rem)] leading-[0.88] tracking-[-0.035em] reveal-up">
-              {t("elder.heading.line1")}<br />
-              {t("elder.heading.line2")}<br />
-              <span className="italic text-[var(--color-accent-signal)]">{t("elder.heading.dont")}</span>{" "}
-              {t("elder.heading.line3")}
+              {t("medbill.heading.line1")}<br />
+              <span className="italic text-[var(--color-risk-warning)]">{t("medbill.heading.line2")}</span><br />
+              <span className="italic text-[var(--color-accent-signal)]">{t("medbill.heading.dont")}</span>{" "}
+              {t("medbill.heading.line3")}
             </h1>
 
             <div className="mt-12 grid grid-cols-12 gap-8">
               <p className="col-span-12 md:col-span-7 font-body text-xl md:text-2xl leading-relaxed text-[var(--color-ink-secondary)] reveal-up">
-                {t("elder.lead")}{" "}
+                {t("medbill.lead")}{" "}
                 <span className="text-[var(--color-accent-signal)] font-mono text-base align-middle">
                   {t("hero.lead.time")}
                 </span>
@@ -140,14 +140,14 @@ export default function ElderCarePage() {
 
               <div className="col-span-12 md:col-span-5 md:border-l md:border-[var(--color-divider)] md:pl-8 space-y-4 reveal-up">
                 <div className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)]">
-                  {t("elder.whatWeFind")}
+                  {t("medbill.whatWeFind")}
                 </div>
                 <ul className="space-y-2 font-body text-sm">
-                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-critical)]">●</span>{t("elder.find.careEscalation")}</li>
-                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-critical)]">●</span>{t("elder.find.responsibleParty")}</li>
-                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-warning)]">●</span>{t("elder.find.communityFee")}</li>
-                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-critical)]">●</span>{t("elder.find.arbitration")}</li>
-                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-warning)]">●</span>{t("elder.find.medicaid")}</li>
+                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-critical)]">●</span>{t("medbill.find.duplicates")}</li>
+                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-critical)]">●</span>{t("medbill.find.upcoding")}</li>
+                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-warning)]">●</span>{t("medbill.find.unbundling")}</li>
+                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-critical)]">●</span>{t("medbill.find.balanceBilling")}</li>
+                  <li className="flex gap-3"><span className="font-mono text-[var(--color-risk-warning)]">●</span>{t("medbill.find.phantom")}</li>
                 </ul>
               </div>
             </div>
@@ -175,10 +175,10 @@ export default function ElderCarePage() {
                         {t("upload.step")}
                       </div>
                       <div className="font-display text-3xl md:text-4xl">
-                        {t("elder.upload.drop")}
+                        {t("medbill.upload.drop")}
                       </div>
                       <div className="font-body text-[var(--color-ink-secondary)] mt-2">
-                        {t("elder.upload.limits")}
+                        {t("medbill.upload.limits")}
                       </div>
                     </div>
                     <button
@@ -255,14 +255,14 @@ export default function ElderCarePage() {
             {t("how.section")}
           </div>
           <h2 className="font-display text-5xl md:text-7xl leading-[0.9] mb-16 max-w-3xl">
-            {t("elder.how.title")}
+            {t("medbill.how.title")}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[var(--color-divider)]">
             {[
-              { num: "01", title: t("how.extract"), body: t("elder.how.extractBody") },
-              { num: "02", title: t("how.forensics"), body: t("elder.how.forensicsBody") },
-              { num: "03", title: t("how.verdict"), body: t("elder.how.verdictBody") },
+              { num: "01", title: t("how.extract"), body: t("medbill.how.extractBody") },
+              { num: "02", title: t("how.forensics"), body: t("medbill.how.forensicsBody") },
+              { num: "03", title: t("how.verdict"), body: t("medbill.how.verdictBody") },
             ].map((s) => (
               <div key={s.num} className="bg-[var(--color-bg-base)] p-10">
                 <div className="font-display text-7xl text-[var(--color-accent-electric)] mb-6">{s.num}</div>

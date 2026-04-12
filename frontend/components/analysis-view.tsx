@@ -243,15 +243,15 @@ export function AnalysisView({
                 })}
               </div>
 
-              {!readOnly && <NegotiationPanel clauses={displayData.risk_clauses} />}
+              {!readOnly && <NegotiationPanel clauses={displayData.risk_clauses} isMedBill={data.industry === "medical_bill"} />}
               <ExportButton data={displayData} />
               {!readOnly && <ShareButton data={data} />}
 
               <Link
-                href="/"
+                href={data.industry === "medical_bill" ? "/medical-bill" : data.industry === "elder_care" ? "/elder-care" : "/lease"}
                 className="block text-center border border-[var(--color-divider)] px-6 py-4 font-mono text-xs tracking-widest uppercase text-[var(--color-ink-secondary)] hover:bg-[var(--color-bg-surface)] hover:text-[var(--color-ink-primary)] transition"
               >
-                {t("analysis.another")}
+                {data.industry === "medical_bill" ? t("analysis.anotherBill") : t("analysis.another")}
               </Link>
             </div>
           </aside>

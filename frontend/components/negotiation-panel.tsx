@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { RiskClause } from "@/lib/api";
 import { generateNegotiationEmail } from "@/lib/api";
 
-export function NegotiationPanel({ clauses }: { clauses: RiskClause[] }) {
+export function NegotiationPanel({ clauses, isMedBill = false }: { clauses: RiskClause[]; isMedBill?: boolean }) {
   const [open, setOpen] = useState(false);
   const [tone, setTone] = useState<"professional" | "firm" | "friendly">("firm");
   const [loading, setLoading] = useState(false);
@@ -40,7 +40,7 @@ export function NegotiationPanel({ clauses }: { clauses: RiskClause[] }) {
         onClick={() => setOpen((v) => !v)}
         className="w-full text-left flex items-center justify-between font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-accent-signal)]"
       >
-        <span>⚡ DRAFT NEGOTIATION EMAIL ({critical.length} clauses)</span>
+        <span>{isMedBill ? `⚡ DRAFT DISPUTE LETTER (${critical.length} items)` : `⚡ DRAFT NEGOTIATION EMAIL (${critical.length} clauses)`}</span>
         <span>{open ? "−" : "+"}</span>
       </button>
 
