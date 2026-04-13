@@ -80,6 +80,22 @@ ClauseType = Literal[
     "price_escalation",
     "data_lock_in",
     "forced_addon",
+    # Auto dealer types
+    "forced_insurance",
+    "overpriced_addon",
+    "dealer_markup",
+    "tradein_lowball",
+    "doc_fee_inflated",
+    # HOA types
+    "special_assessment",
+    "excessive_fine",
+    "lien_on_property",
+    "rental_ban",
+    "pet_restriction",
+    "architectural_control",
+    "reserve_deficit",
+    "selective_enforcement",
+    "transfer_fee",
     "other",
 ]
 

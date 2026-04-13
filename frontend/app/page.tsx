@@ -93,7 +93,7 @@ export default function HomePage() {
               <div className="font-mono text-[10px] tracking-widest text-[var(--color-ink-tertiary)]">
                 {t("hero.stats.label")}
               </div>
-              <div className="font-display text-4xl">126</div>
+              <div className="font-display text-4xl">146</div>
               <div className="font-mono text-[10px] text-[var(--color-ink-secondary)]">
                 {t("hero.stats.body")}
               </div>

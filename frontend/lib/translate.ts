@@ -23,7 +23,7 @@ async function apiTranslate(items: string[], target: Locale): Promise<string[]> 
 }
 
 export async function loadUIStrings(locale: Locale): Promise<Record<string, string>> {
-  if (locale === "en") return UI_EN;
+  if (locale === "ru") return UI_EN;
   if (typeof window !== "undefined") {
     const cached = localStorage.getItem(UI_CACHE_KEY(locale));
     if (cached) {
@@ -42,7 +42,7 @@ export async function loadUIStrings(locale: Locale): Promise<Record<string, stri
     }
     return map;
   } catch (e) {
-    console.warn("UI translate failed, falling back to EN", e);
+    console.warn("UI translate failed, falling back to RU", e);
     return UI_EN;
   }
 }
@@ -52,7 +52,7 @@ export async function translateAnalysis(
   data: AnalysisData & { id?: string },
   locale: Locale,
 ): Promise<AnalysisData> {
-  if (locale === "en") return data;
+  if (locale === "ru") return data;
   const docId = (data as { id?: string }).id;
   if (typeof window !== "undefined" && docId) {
     const cached = localStorage.getItem(DOC_CACHE_KEY(docId, locale));

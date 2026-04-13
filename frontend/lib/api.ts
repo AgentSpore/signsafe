@@ -28,6 +28,13 @@ export type ClauseType =
   // Service
   | "scope_ambiguity" | "cancellation_penalty" | "price_escalation"
   | "data_lock_in" | "forced_addon"
+  // Auto dealer
+  | "forced_insurance" | "overpriced_addon" | "dealer_markup"
+  | "tradein_lowball" | "doc_fee_inflated"
+  // HOA
+  | "special_assessment" | "excessive_fine" | "lien_on_property"
+  | "rental_ban" | "pet_restriction" | "architectural_control"
+  | "reserve_deficit" | "selective_enforcement" | "transfer_fee"
   | "other";
 
 export interface RiskClause {

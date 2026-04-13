@@ -13,6 +13,8 @@ export type Industry =
   | "purchase"
   | "service"
   | "insurance"
+  | "auto_purchase"
+  | "hoa"
   | "other";
 
 export interface DocType {
@@ -33,6 +35,8 @@ export const DOCUMENT_TYPES: DocType[] = [
   { id: "restaurant", labelRu: "Аренда", labelEn: "Lease", hintRu: "Офис, магазин, склад", hintEn: "Office, retail, warehouse" },
   { id: "elder_care", labelRu: "Дом престарелых", labelEn: "Elder Care", hintRu: "Договор на уход", hintEn: "Assisted living" },
   { id: "medical_bill", labelRu: "Мед. счёт", labelEn: "Medical Bill", hintRu: "Больница, клиника", hintEn: "Hospital, clinic" },
+  { id: "auto_purchase", labelRu: "Покупка авто", labelEn: "Auto Purchase", hintRu: "Дилер, допы, кредит", hintEn: "Dealer, add-ons, loan" },
+  { id: "hoa", labelRu: "ТСЖ / HOA", labelEn: "HOA / CC&R", hintRu: "Устав, взносы, штрафы", hintEn: "Rules, fees, fines" },
 ];
 
 // Legacy compat
