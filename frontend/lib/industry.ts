@@ -8,35 +8,44 @@ export type Industry =
   | "warehouse"
   | "elder_care"
   | "medical_bill"
+  | "employment"
+  | "loan"
+  | "purchase"
+  | "service"
+  | "insurance"
   | "other";
 
-export const COMMERCIAL_INDUSTRIES: { id: Industry; label: string; hint: string }[] = [
-  { id: "restaurant", label: "Restaurant", hint: "Food service, cafes, bars" },
-  { id: "retail", label: "Retail", hint: "Stores, boutiques, showrooms" },
-  { id: "office", label: "Office", hint: "Coworking, SaaS, agencies" },
-  { id: "medical", label: "Medical", hint: "Clinics, dental, therapy" },
-  { id: "salon", label: "Salon", hint: "Beauty, barbers, nails" },
-  { id: "fitness", label: "Fitness", hint: "Gyms, studios, yoga" },
-  { id: "warehouse", label: "Warehouse", hint: "Industrial, logistics" },
-  { id: "other", label: "Other", hint: "General commercial" },
+export interface DocType {
+  id: Industry;
+  labelRu: string;
+  labelEn: string;
+  hintRu: string;
+  hintEn: string;
+}
+
+export const DOCUMENT_TYPES: DocType[] = [
+  { id: "other", labelRu: "Любой документ", labelEn: "Any Document", hintRu: "AI разберётся сам", hintEn: "AI will figure it out" },
+  { id: "employment", labelRu: "Трудовой договор", labelEn: "Employment", hintRu: "ТК РФ, NDA, увольнение", hintEn: "Labor, NDA, termination" },
+  { id: "loan", labelRu: "Кредит / Займ", labelEn: "Loan / Credit", hintRu: "Банк, МФО, ипотека", hintEn: "Bank, mortgage, MFI" },
+  { id: "purchase", labelRu: "Купля-продажа", labelEn: "Purchase", hintRu: "Недвижимость, авто", hintEn: "Real estate, auto" },
+  { id: "service", labelRu: "Услуги / Подряд", labelEn: "Services", hintRu: "SaaS, ремонт, абонемент", hintEn: "SaaS, contract work" },
+  { id: "insurance", labelRu: "Страхование", labelEn: "Insurance", hintRu: "ОСАГО, КАСКО, ДМС", hintEn: "Auto, health, life" },
+  { id: "restaurant", labelRu: "Аренда", labelEn: "Lease", hintRu: "Офис, магазин, склад", hintEn: "Office, retail, warehouse" },
+  { id: "elder_care", labelRu: "Дом престарелых", labelEn: "Elder Care", hintRu: "Договор на уход", hintEn: "Assisted living" },
+  { id: "medical_bill", labelRu: "Мед. счёт", labelEn: "Medical Bill", hintRu: "Больница, клиника", hintEn: "Hospital, clinic" },
 ];
 
-// Backwards compat alias — home page still uses INDUSTRIES (commercial only).
+// Legacy compat
+export const COMMERCIAL_INDUSTRIES = DOCUMENT_TYPES.filter(d =>
+  ["restaurant", "retail", "office", "medical", "salon", "fitness", "warehouse", "other"].includes(d.id)
+).map(d => ({ id: d.id, label: d.labelEn, hint: d.hintEn }));
+
 export const INDUSTRIES = COMMERCIAL_INDUSTRIES;
 
-export const ELDER_CARE_INDUSTRY: { id: Industry; label: string; hint: string } = {
-  id: "elder_care",
-  label: "Assisted Living",
-  hint: "Senior care, memory care, CCRC",
-};
+export const ELDER_CARE_INDUSTRY = { id: "elder_care" as Industry, label: "Assisted Living", hint: "Senior care" };
+export const MEDICAL_BILL_INDUSTRY = { id: "medical_bill" as Industry, label: "Medical Bill", hint: "Hospital bills" };
 
-export const MEDICAL_BILL_INDUSTRY: { id: Industry; label: string; hint: string } = {
-  id: "medical_bill",
-  label: "Medical Bill",
-  hint: "Hospital bills, EOBs, provider invoices",
-};
-
-export function isElderCare(industry: Industry | null): boolean {
+export function isElderCare(industry: Industry | string | null): boolean {
   return industry === "elder_care";
 }
 

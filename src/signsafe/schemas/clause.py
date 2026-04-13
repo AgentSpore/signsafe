@@ -47,6 +47,39 @@ ClauseType = Literal[
     "modifier_abuse",
     "surprise_provider",
     "or_surcharge",
+    # Employment contract types
+    "probation_violation",
+    "non_compete",
+    "ip_overreach",
+    "termination_penalty",
+    "overtime_abuse",
+    "liability_shift",
+    "unilateral_change",
+    # Loan / credit types
+    "hidden_commission",
+    "effective_rate_trap",
+    "prepayment_penalty",
+    "variable_rate",
+    "cross_default",
+    "auto_debit",
+    "disproportionate_collateral",
+    # Insurance types
+    "coverage_exclusion",
+    "hidden_deductible",
+    "notification_trap",
+    "depreciation_trap",
+    "auto_renewal_increase",
+    # Purchase types
+    "hidden_encumbrance",
+    "warranty_waiver",
+    "deposit_forfeiture",
+    "risk_transfer",
+    # Service contract types
+    "scope_ambiguity",
+    "cancellation_penalty",
+    "price_escalation",
+    "data_lock_in",
+    "forced_addon",
     "other",
 ]
 

@@ -1,112 +1,76 @@
-# SignSafe — Document Forensics for First-Timers
+# SignSafe — Проверка документов AI
 
-AI co-pilot that reads the scary fine print for people who cannot afford a lawyer —
-or a medical billing specialist.
+AI-помощник, который читает мелкий шрифт за вас — для тех, кто не может позволить юриста.
 
-Three verticals from one engine:
+Загрузите PDF любого договора → AI найдёт подводные камни за 30 секунд.
 
-1. **Commercial Lease** — first-time SMB tenants (restaurants, retail, office, salons,
-   gyms, medical, warehouse). `/lease`
-2. **Assisted Living** — families placing a parent in senior care. `/elder-care`
-3. **Medical Bill** — patients overwhelmed by hospital bills, EOBs, and provider
-   invoices. `/medical-bill`
+## Типы документов (9)
 
-All flows: upload PDF → in-memory parse → free LLM cross-references patterns →
-risk score, plain-English explanation, counter-language / dispute letter.
+| Тип | Паттернов | Примеры |
+|---|---|---|
+| Любой документ | универсальный | AI определит тип сам |
+| Трудовой договор | 6 | ТК РФ, NDA, неконкурент, матответственность |
+| Кредит / Займ | 6 | Банк, МФО, ипотека, скрытые комиссии |
+| Купля-продажа | 3 | Недвижимость, авто, обременения |
+| Услуги / Подряд | 6 | SaaS, подряд, автопродление, штрафы |
+| Страхование | 4 | ОСАГО, КАСКО, ДМС, исключения, франшиза |
+| Аренда | 40 | Офис, магазин, ресторан, склад |
+| Дом престарелых | 34 | Договор на уход, повышение стоимости |
+| Мед. счёт | 24 | Больничные счета, дублирование, upcoding |
 
-## Stack
-- Backend: FastAPI + pydantic-ai (free OpenRouter cascade) + PyMuPDF + Tesseract OCR
-- Frontend: Next.js 16 + React 19 + Tailwind v4 + TypeScript, PWA installable
-- Privacy: stateless analysis. Results live only in your browser. Optional E2E
-  encrypted cloud sync (AES-GCM, key derived from email via PBKDF2).
-- i18n: EN / RU / ZH / ES / DE / FR via Google Translate API
+**Итого: 126 паттернов подводных камней** в `src/signsafe/knowledge/predatory_patterns.json`
 
-## Run
+## Стек
+- Backend: FastAPI + pydantic-ai (бесплатные LLM через OpenRouter) + PyMuPDF + Tesseract OCR
+- Frontend: Next.js 16 + React 19 + Tailwind v4 + TypeScript, PWA
+- Приватность: stateless. PDF анализируется в памяти и удаляется. Результаты только в браузере.
+- i18n: RU (основной) + EN / ZH / ES / DE / FR через Google Translate API
+- Опционально: E2E зашифрованная облачная синхронизация (AES-GCM)
+
+## Запуск
 ```bash
 make install
 OPENROUTER_API_KEY=... make dev
 ```
 Backend: `:8894` · Frontend: `:3004`
 
-## Knowledge base
-**98 seeded predatory patterns** in `src/signsafe/knowledge/predatory_patterns.json`:
+## Правовая база
 
-### Commercial lease (40)
-personal guarantees, auto-renewals, CAM charges, holdover penalties, relocation,
-exclusive use, assignment bans, indemnification, early termination, security
-deposits, rent escalation, maintenance shifts, estoppel traps, insurance
-overreach, use restrictions.
+### Российское право
+- **ГК РФ**: ст.310 (односторонний отказ), ст.782 (расторжение услуг), ст.810 (досрочное погашение), ст.475 (дефекты товара), ст.381 (задаток), гл.30/39/48
+- **ТК РФ**: ст.70 (испытательный срок), ст.119 (допотпуск), ст.152 (сверхурочные), ст.241/243 (матответственность), ст.249 (обучение)
+- **ЗоЗПП**: навязывание услуг, одностороннее изменение цен, арбитражные оговорки
+- **ФЗ о потребительском кредите**: ст.29 (изменение ставки), период охлаждения, ПСК
 
-### Elder care / assisted living (34)
-care level escalation, non-refundable community fees, mandatory medication
-management fees, 30-day-after-death rent, forced memory care transfer, Medicaid
-spend-down evictions, third-party hospice restrictions, arbitration waivers for
-neglect/abuse, adult child personal guaranty, liability caps for falls, broad
-discharge rights, bed-hold fees, unilateral care plan changes, unlimited annual
-price increases, transfer trauma waivers, couples separation, personal property
-limits, outside food bans, rent-until-re-rented traps.
+### Международное (US)
+- No Surprises Act, FDCPA, Medicare rates, state balance billing laws
 
-### Medical bill / EOB (24)
-duplicate charges (E&M, facility, delivery), upcoded visit levels (office, ER),
-unbundled lab panels (CMP, CBC), balance billing (emergency, ancillary providers),
-facility fees for outpatient visits, phantom charges (anesthesia time, consults,
-supplies), missing insurance adjustments (credit, copay), stale billing (12mo+,
-collection first notice), collection markup, modifier abuse (-25, -59),
-OR surcharge for exam room procedures, surprise providers (assistant surgeon,
-out-of-network anesthesiologist), chargemaster billing without adjustment.
+## Маршруты
+- `/` — главная (выбор типа документа + загрузка)
+- `/analyze/[id]` — результат анализа
+- `/history` — локальная история
+- `/sync` — облачная синхронизация
+- `/shared` — публичный просмотр
 
-## Medical bill vertical — why now
-30% of US medical bills contain errors (McKinsey). A patient used Claude AI to
-negotiate $163K off a $195K hospital bill (Feb 2026). AARP warns about billing
-errors but no free automated tool exists — just paid services ($49-$299/case).
-SignSafe's engine reads bills and tells patients exactly what to dispute.
-
-Reddit signal that drove this (r/personalfinance, Apr 2026):
-> "Billed $1,440 for 20 min urgent care visit"
-
-## Elder care vertical — why now
-800k US seniors move into assisted living each year. Contracts run 30-60 pages,
-bury $40k/yr fee escalations behind friendly tours. AARP warns but no dedicated
-tool exists — just blog articles. SignSafe's engine reads these contracts and
-tells adult children exactly what to push back on before move-in day.
-
-Reddit signal (r/eldercare, Apr 2026):
-> "Assisted living suddenly trying to force $1,200/month med management after
-> allowing our process for a year."
-
-## Routes
-- `/` — hub page (all three verticals)
-- `/lease` — commercial lease landing
-- `/elder-care` — assisted living landing
-- `/medical-bill` — medical bill landing
-- `/analyze/[id]` — analysis view (shared by all)
-- `/history` — local history
-- `/sync` — optional E2E sync
-- `/shared` — shareable read-only view
-
-## Architecture
-Layered Python backend:
+## Архитектура
 ```
 src/signsafe/
-├── api/            # FastAPI routers (documents, translate, sync, negotiate)
-├── services/       # business logic (pdf, analysis, agents, translate, sync)
+├── api/            # FastAPI (documents, translate, sync, negotiate)
+├── services/       # бизнес-логика (pdf, analysis, agents, translate, sync)
 ├── schemas/        # Pydantic DTOs (document, clause, industry, sync)
-├── knowledge/      # predatory_patterns.json (98)
+├── knowledge/      # predatory_patterns.json (126)
 ├── core/           # config, database, deps
-└── main.py         # app factory
+└── main.py
 ```
 
-Next.js frontend:
 ```
 frontend/
-├── app/            # /, /lease, /elder-care, /medical-bill, /analyze/[id], /history, /sync, /shared
-├── components/     # analysis-view, clause-card, industry-selector, etc.
+├── app/            # /, /analyze/[id], /history, /sync, /shared
+├── components/     # analysis-view, clause-card, risk-score, etc.
 ├── lib/            # api, storage, crypto, sync, translate, i18n, industry
 └── public/         # manifest, sw.js, icons
 ```
 
-## Disclaimer
-Educational tool — not legal or medical advice. Consult a licensed attorney for
-contract decisions, and verify medical billing disputes with your insurance
-company. Especially true for elder care contracts involving irrevocable entrance
-fees and medical bills involving active treatment coverage.
+## Дисклеймер
+Образовательный инструмент — не юридическая и не медицинская консультация.
+Для важных решений обратитесь к лицензированному специалисту.

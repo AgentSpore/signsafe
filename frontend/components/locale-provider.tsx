@@ -12,7 +12,7 @@ interface LocaleContextValue {
 }
 
 const LocaleContext = createContext<LocaleContextValue>({
-  locale: "en",
+  locale: "ru",
   setLocale: () => {},
   t: (k) => UI_EN[k] || k,
   loading: false,
@@ -21,17 +21,17 @@ const LocaleContext = createContext<LocaleContextValue>({
 const KEY = "signsafe:locale";
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("en");
+  const [locale, setLocaleState] = useState<Locale>("ru");
   const [strings, setStrings] = useState<Record<string, string>>(UI_EN);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(KEY) as Locale | null;
-    if (stored && stored !== "en") setLocaleState(stored);
+    if (stored && stored !== "ru") setLocaleState(stored);
   }, []);
 
   useEffect(() => {
-    if (locale === "en") {
+    if (locale === "ru") {
       setStrings(UI_EN);
       return;
     }

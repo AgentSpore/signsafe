@@ -1,153 +1,190 @@
-"""Industry presets."""
+"""Document type presets for universal legal document analysis."""
 
 from __future__ import annotations
 
 from typing import Literal
 
 Industry = Literal[
-    "restaurant",
-    "retail",
-    "office",
-    "medical",
-    "salon",
-    "fitness",
-    "warehouse",
+    # Commercial lease (legacy + still used)
+    "restaurant", "retail", "office", "medical", "salon", "fitness", "warehouse",
+    # Elder care
     "elder_care",
+    # Medical bill
     "medical_bill",
+    # New universal types
+    "employment",
+    "loan",
+    "purchase",
+    "service",
+    "insurance",
     "other",
 ]
 
 
 COMMERCIAL_INDUSTRIES: set[str] = {
-    "restaurant",
-    "retail",
-    "office",
-    "medical",
-    "salon",
-    "fitness",
-    "warehouse",
-    "other",
+    "restaurant", "retail", "office", "medical",
+    "salon", "fitness", "warehouse", "other",
 }
 
 ELDER_CARE_INDUSTRIES: set[str] = {"elder_care"}
 
 MEDICAL_BILL_INDUSTRIES: set[str] = {"medical_bill"}
 
+# Document type groupings for UI
+DOCUMENT_TYPES: list[dict[str, str]] = [
+    {"id": "other", "label_ru": "Любой документ", "label_en": "Any Document", "hint_ru": "Загрузи любой договор — AI разберётся", "hint_en": "Upload any contract — AI will figure it out"},
+    {"id": "employment", "label_ru": "Трудовой договор", "label_en": "Employment", "hint_ru": "ТК РФ, увольнение, NDA, неконкурент", "hint_en": "Labor law, termination, NDA"},
+    {"id": "loan", "label_ru": "Кредит / Займ", "label_en": "Loan / Credit", "hint_ru": "Банк, МФО, ипотека, рассрочка", "hint_en": "Bank, mortgage, installment"},
+    {"id": "purchase", "label_ru": "Купля-продажа", "label_en": "Purchase", "hint_ru": "Недвижимость, авто, оборудование", "hint_en": "Real estate, auto, equipment"},
+    {"id": "service", "label_ru": "Оказание услуг", "label_en": "Services", "hint_ru": "Подряд, SaaS, абонемент, ремонт", "hint_en": "Contract work, SaaS, subscription"},
+    {"id": "insurance", "label_ru": "Страхование", "label_en": "Insurance", "hint_ru": "ОСАГО, КАСКО, ДМС, жизнь, имущество", "hint_en": "Auto, health, life, property"},
+    {"id": "restaurant", "label_ru": "Аренда помещения", "label_en": "Commercial Lease", "hint_ru": "Офис, магазин, ресторан, склад", "hint_en": "Office, retail, restaurant, warehouse"},
+    {"id": "elder_care", "label_ru": "Дом престарелых", "label_en": "Elder Care", "hint_ru": "Договор на уход за пожилыми", "hint_en": "Assisted living contract"},
+    {"id": "medical_bill", "label_ru": "Медицинский счёт", "label_en": "Medical Bill", "hint_ru": "Больничные счета, ДМС, клиника", "hint_en": "Hospital bills, insurance claims"},
+]
+
 
 INDUSTRY_FOCUS: dict[str, str] = {
     "restaurant": (
-        "Restaurant/food service tenant. Pay extra attention to: exclusive use radius, "
-        "operating hours restrictions, grease trap and ventilation maintenance, "
-        "HVAC replacement cost (critical for food service), CAM charges (often high in malls), "
-        "hold-over penalties (location-critical), permits and code compliance for food prep."
+        "Коммерческая аренда помещения. Обрати внимание на: эксклюзивное использование, "
+        "ограничения часов работы, обслуживание вентиляции, CAM/эксплуатационные расходы, "
+        "штрафы за задержку освобождения, автопродление, расширение площади, разрешения."
     ),
     "retail": (
-        "Retail tenant. Pay extra attention to: exclusive use clause and co-tenancy, "
-        "radius restrictions on new locations, percentage rent clauses, signage rights, "
-        "operating hours, CAM (often inflated in shopping centers), relocation rights, "
-        "kick-out clauses tied to anchor tenant leaving."
+        "Аренда торгового помещения. Обрати внимание на: эксклюзивное использование, "
+        "процент от оборота, вывеска, часы работы, CAM (часто завышен в ТЦ), "
+        "условия расторжения при уходе якорного арендатора."
     ),
     "office": (
-        "Office tenant. Pay extra attention to: build-out allowances (TI), "
-        "subletting and assignment flexibility (for hybrid work), after-hours HVAC charges, "
-        "operating expense escalations, parking ratios, right of first refusal on adjacent space."
+        "Аренда офиса. Обрати внимание на: компенсация ремонта (TI), "
+        "субаренда, расходы на HVAC вне часов, эскалация расходов, парковка."
     ),
     "medical": (
-        "Medical/healthcare tenant. Pay extra attention to: build-out requirements "
-        "(plumbing, electrical for exam rooms), ADA compliance, medical waste disposal, "
-        "HIPAA-compliant space access, exclusive use for specialty, patient parking, "
-        "extended hours operation rights, insurance requirements (malpractice coverage)."
+        "Аренда медицинского помещения. Обрати внимание на: ремонт (сантехника, электрика), "
+        "доступность, медотходы, эксклюзивное использование, страховые требования."
     ),
     "salon": (
-        "Salon/beauty tenant. Pay extra attention to: water usage and plumbing upgrades, "
-        "ventilation for chemical fumes, exclusive use (no competing salon), "
-        "signage and window display rights, operating hours flexibility."
+        "Аренда для салона красоты. Обрати внимание на: водоснабжение, вентиляция для химикатов, "
+        "эксклюзивное использование, вывеска, часы работы."
     ),
     "fitness": (
-        "Fitness/gym tenant. Pay extra attention to: noise and vibration clauses, "
-        "floor load capacity for heavy equipment, HVAC for high occupancy, "
-        "extended hours operation, exclusive use for fitness category, "
-        "flexible cancellation if membership drops."
+        "Аренда для фитнес-клуба. Обрати внимание на: шумоизоляция, нагрузка на пол, "
+        "HVAC для высокой загрузки, расширенные часы, эксклюзивное использование."
     ),
     "warehouse": (
-        "Warehouse/industrial tenant. Pay extra attention to: loading dock rights, "
-        "floor load capacity, ceiling height, column spacing, 24/7 access, "
-        "triple-net maintenance obligations, environmental compliance, "
-        "heavy machinery installation rights."
+        "Аренда склада. Обрати внимание на: погрузочные доки, нагрузка на пол, "
+        "высота потолков, круглосуточный доступ, triple-net обслуживание, экология."
     ),
     "elder_care": (
-        "ASSISTED LIVING / SENIOR CARE CONTRACT. This is NOT a commercial lease — "
-        "this is a residency and services agreement for a senior moving into an assisted "
-        "living facility, memory care, or CCRC. The resident's adult child is usually the "
-        "decision-maker and emotionally pressured. Pay extra attention to:\n"
-        "- CARE LEVEL ESCALATION: facility unilaterally raises 'level of care' and fees "
-        "without independent assessment; often doubles base rate over 12-24 months.\n"
-        "- COMMUNITY FEE / ENTRANCE FEE: non-refundable $3k-$10k+ 'community fee' charged "
-        "at move-in even if resident leaves within 30 days.\n"
-        "- MEDICATION MANAGEMENT FEES: $500-$2000/mo add-on for basic pill handling, often "
-        "forced after initial lease period.\n"
-        "- 30-DAY NOTICE + LAST MONTH PAID: forces family to pay full month even after "
-        "resident dies or is hospitalized permanently.\n"
-        "- TRANSFER TO MEMORY CARE: forced move to higher-cost unit at facility's sole "
-        "discretion with minimal notice.\n"
-        "- MEDICAID SPEND-DOWN TRAPS: contract refuses Medicaid after private-pay period; "
-        "forces eviction when savings exhausted.\n"
-        "- THIRD-PARTY PROVIDER RESTRICTIONS: bans outside hospice, home health, or "
-        "physical therapy, locking resident to facility's preferred vendors.\n"
-        "- ARBITRATION CLAUSE: waives right to sue for neglect, abuse, or wrongful death; "
-        "forces private arbitration which favors facility.\n"
-        "- RESPONSIBLE PARTY / FINANCIAL GUARANTY: adult child personally guarantees payment, "
-        "putting their own assets at risk if parent cannot pay.\n"
-        "- PRICE INCREASE NOTICE: only 30-day notice for rent hikes; no cap, no formula.\n"
-        "- LIMITATION OF LIABILITY: caps facility's liability for falls, infections, "
-        "elopement, medication errors to trivial amounts.\n"
-        "- DISCHARGE RIGHTS: broad grounds for facility to evict resident (behavior, "
-        "care needs beyond license, non-payment) with minimal appeal rights.\n"
-        "- HOLDING / DEPOSIT FEE: charges daily rate to 'hold' bed during hospitalization "
-        "even though resident is not using services.\n"
-        "- POA / CONSERVATORSHIP REQUIREMENTS: requires family to obtain POA or pay "
-        "facility's preferred attorney.\n"
-        "- CARE PLAN CHANGES: facility can modify care plan unilaterally without family sign-off.\n"
-        "Use plain, direct language an adult child (not lawyer) can understand. Express "
-        "dollar impact clearly. This family is scared and overwhelmed — be their advocate."
+        "ДОГОВОР НА ПРОЖИВАНИЕ В ДОМЕ ПРЕСТАРЕЛЫХ / ПАНСИОНАТЕ.\n"
+        "Это НЕ обычная аренда — это договор на уход за пожилым человеком. "
+        "Решение принимает взрослый ребёнок под эмоциональным давлением.\n"
+        "Обрати внимание на:\n"
+        "- ПОВЫШЕНИЕ УРОВНЯ УХОДА: учреждение в одностороннем порядке повышает 'уровень ухода' и стоимость\n"
+        "- ВСТУПИТЕЛЬНЫЙ ВЗНОС: невозвратный взнос при заселении\n"
+        "- ПРИНУДИТЕЛЬНОЕ МЕДОБСЛУЖИВАНИЕ: навязывание услуг по управлению лекарствами\n"
+        "- ОПЛАТА ПОСЛЕ СМЕРТИ: семья платит полный месяц после смерти или госпитализации\n"
+        "- ПЕРЕВОД В ДРУГОЕ ОТДЕЛЕНИЕ: принудительный перевод по усмотрению учреждения\n"
+        "- ОТКАЗ ОТ СУБСИДИЙ: запрет на госпомощь после истощения личных средств\n"
+        "- ЗАПРЕТ СТОРОННИХ СПЕЦИАЛИСТОВ: только врачи учреждения\n"
+        "- АРБИТРАЖНАЯ ОГОВОРКА: отказ от права на суд при халатности\n"
+        "- ЛИЧНОЕ ПОРУЧИТЕЛЬСТВО: взрослый ребёнок лично отвечает за долги\n"
+        "- ВЫСЕЛЕНИЕ: широкие основания для выселения с минимальным обжалованием\n"
+        "Говори понятным языком для семьи, не юриста."
     ),
     "medical_bill": (
-        "MEDICAL BILL / EOB / ITEMIZED STATEMENT REVIEW. This is NOT a contract — "
-        "this is a hospital bill, insurance Explanation of Benefits (EOB), or provider "
-        "invoice. The patient or their family member needs help understanding charges "
-        "and finding errors. Pay extra attention to:\n"
-        "- DUPLICATE CHARGES: same CPT code billed twice on same date of service.\n"
-        "- UPCODING: E&M visit level inflated (Level 5 billed for a routine 15-min visit "
-        "that should be Level 3). Can add $200-$500 per visit.\n"
-        "- UNBUNDLING: lab panel (CMP/BMP) split into individual tests; bundled procedure "
-        "components billed separately. A $45 panel becomes $400+.\n"
-        "- BALANCE BILLING: patient billed for difference between provider charge and "
-        "insurance allowance, especially for emergency/out-of-network care. May violate "
-        "No Surprises Act (2022) for emergency services and certain other scenarios.\n"
-        "- FACILITY FEES: surprise location-based fee on top of provider fee for outpatient "
-        "procedures done in hospital-owned clinic. Often $500-$2,000+ with no warning.\n"
-        "- PHANTOM CHARGES: services listed that were never performed (e.g., 3hr anesthesia "
-        "billed for 45-min procedure; consultation that never happened).\n"
-        "- MISSING INSURANCE ADJUSTMENTS: insurer paid but credit not applied — patient sees "
-        "full billed amount instead of patient responsibility.\n"
-        "- STALE BILLING: bill for service >12 months old sent directly without prior notice. "
-        "Many states have timely filing limits.\n"
-        "- COLLECTION MARKUP: bill sent to collection agency with 30-40% markup over original.\n"
-        "- MODIFIER ABUSE: incorrect CPT modifiers (-25, -59, -76) used to bypass bundling "
-        "edits and inflate reimbursement.\n"
-        "- OPERATING ROOM SURCHARGE: facility charges OR time for a procedure done in exam room.\n"
-        "- SURPRISE PROVIDER: assistant surgeon or anesthesiologist not chosen by patient "
-        "billed separately at out-of-network rates.\n\n"
-        "For each error found:\n"
-        "- Quote the EXACT line item or charge description from the document.\n"
-        "- Estimate dollar overcharge when possible.\n"
-        "- Cite the patient protection law that applies (No Surprises Act, state balance "
-        "billing law, CMS timely filing, Fair Debt Collection Practices Act).\n"
-        "- Provide dispute language the patient can use in a letter or phone call.\n\n"
-        "Use plain English. The reader is scared and overwhelmed by medical jargon. "
-        "Express every dollar impact clearly. Be their advocate."
+        "МЕДИЦИНСКИЙ СЧЁТ / ВЫПИСКА ИЗ КЛИНИКИ.\n"
+        "Это НЕ договор — это счёт за медуслуги. Пациент или семья не понимает начисления.\n"
+        "Обрати внимание на:\n"
+        "- ДУБЛИРОВАНИЕ: одна и та же услуга выставлена дважды\n"
+        "- ЗАВЫШЕНИЕ КОДА: простой приём записан как сложная консультация\n"
+        "- РАЗБИВКА ПАКЕТА: комплексный анализ разбит на отдельные позиции (дороже)\n"
+        "- НАВЯЗАННЫЕ УСЛУГИ: услуги которые не были оказаны или не согласованы\n"
+        "- СКРЫТЫЕ СБОРЫ: 'facility fee', сервисные сборы, расходные материалы по 10x цене\n"
+        "- ПРОСРОЧЕННЫЙ СЧЁТ: счёт старше 12 месяцев без предварительного уведомления\n"
+        "- НАЦЕНКА КОЛЛЕКТОРОВ: коллекторское агентство прибавило 30-40%\n"
+        "Оценивай каждую строку. Указывай сумму переплаты. Ссылайся на ЗоЗПП, ГК РФ."
     ),
-    "other": "General commercial tenant. Apply standard forensic review.",
+    "employment": (
+        "ТРУДОВОЙ ДОГОВОР / КОНТРАКТ.\n"
+        "Обрати внимание на:\n"
+        "- ИСПЫТАТЕЛЬНЫЙ СРОК: превышает 3 месяца (нарушение ТК РФ ст.70)\n"
+        "- ШТРАФЫ ЗА УВОЛЬНЕНИЕ: работник 'должен' компенсацию при увольнении по собственному\n"
+        "- НЕКОНКУРЕНТНАЯ ОГОВОРКА: запрет работать в отрасли после увольнения (в РФ не имеет юридической силы)\n"
+        "- NDA / КОНФИДЕНЦИАЛЬНОСТЬ: чрезмерно широкое определение конфиденциальной информации\n"
+        "- ИНТЕЛЛЕКТУАЛЬНАЯ СОБСТВЕННОСТЬ: всё созданное работником (включая личные проекты) принадлежит работодателю\n"
+        "- ПЕРЕРАБОТКИ: 'ненормированный рабочий день' без компенсации\n"
+        "- МАТЕРИАЛЬНАЯ ОТВЕТСТВЕННОСТЬ: полная матответственность без законных оснований (ст.243 ТК РФ)\n"
+        "- ОДНОСТОРОННЕЕ ИЗМЕНЕНИЕ УСЛОВИЙ: работодатель меняет оклад/должность без согласия\n"
+        "- ОТКАЗ ОТ БОЛЬНИЧНОГО/ОТПУСКА: условия ограничивающие право на отпуск или больничный\n"
+        "- ПОДСУДНОСТЬ: навязывание арбитража вместо суда общей юрисдикции\n"
+        "Ссылайся на ТК РФ, ГК РФ. Говори понятно для работника без юридического образования."
+    ),
+    "loan": (
+        "КРЕДИТНЫЙ ДОГОВОР / ДОГОВОР ЗАЙМА.\n"
+        "Обрати внимание на:\n"
+        "- СКРЫТЫЕ КОМИССИИ: страховка жизни, 'обслуживание счёта', SMS-информирование, навязаны как обязательные\n"
+        "- ЭФФЕКТИВНАЯ СТАВКА: заявленная ставка 10% но реальная 25%+ с учётом комиссий\n"
+        "- ШТРАФ ЗА ДОСРОЧНОЕ ПОГАШЕНИЕ: ограничение права досрочного погашения (нарушает ГК РФ ст.810)\n"
+        "- ПЕРЕМЕННАЯ СТАВКА: банк меняет ставку в одностороннем порядке\n"
+        "- ЗАЛОГ НЕПРОПОРЦИОНАЛЕН: залог в 3-5 раз превышает сумму кредита\n"
+        "- ПОРУЧИТЕЛЬСТВО РОДСТВЕННИКОВ: поручителем выступает супруг/родитель без полного понимания\n"
+        "- АВТОСПИСАНИЕ: банк списывает любые поступления на счёт в счёт долга\n"
+        "- КРОСС-ДЕФОЛТ: просрочка по одному кредиту = дефолт по всем кредитам в банке\n"
+        "- МФО ЛОВУШКИ: дневная ставка 1% = 365% годовых, скрытые пролонгации\n"
+        "Ссылайся на ФЗ 'О потребительском кредите', ЗоЗПП, ГК РФ."
+    ),
+    "purchase": (
+        "ДОГОВОР КУПЛИ-ПРОДАЖИ.\n"
+        "Обрати внимание на:\n"
+        "- СКРЫТЫЕ ОБРЕМЕНЕНИЯ: залог, арест, сервитут не указаны в договоре\n"
+        "- ОТКАЗ ОТ ГАРАНТИИ: продавец снимает с себя ответственность за скрытые дефекты\n"
+        "- ШТРАФЫ ЗА ОТКАЗ: покупатель теряет задаток/аванс при отказе от сделки\n"
+        "- НЕСООТВЕТСТВИЕ ОПИСАНИЯ: характеристики в договоре не совпадают с реальностью\n"
+        "- ПЕРЕХОД РИСКОВ: риск случайной гибели переходит до фактической передачи\n"
+        "- НЕДВИЖИМОСТЬ: отсутствие акта приёма-передачи, не указаны сроки регистрации\n"
+        "- АВТО: пробег не указан, перебитый VIN, условия о 'как есть' (as-is)\n"
+        "Ссылайся на ГК РФ (глава 30), ЗоЗПП, ФЗ о госрегистрации недвижимости."
+    ),
+    "service": (
+        "ДОГОВОР ОКАЗАНИЯ УСЛУГ / ПОДРЯДА.\n"
+        "Обрати внимание на:\n"
+        "- РАЗМЫТЫЕ СРОКИ: 'в разумный срок' без конкретных дат\n"
+        "- АВТОПРОДЛЕНИЕ: договор продлевается автоматически если не отказаться за 30-60 дней\n"
+        "- ШТРАФ ЗА РАСТОРЖЕНИЕ: клиент должен оплатить оставшийся период при досрочном расторжении\n"
+        "- ОГРАНИЧЕНИЕ ОТВЕТСТВЕННОСТИ: исполнитель не отвечает за результат, только за 'процесс'\n"
+        "- НАВЯЗАННЫЕ ДОПУСЛУГИ: подписка включает скрытые платные модули\n"
+        "- SaaS ЛОВУШКИ: данные пользователя не выгружаемы после расторжения\n"
+        "- ОДНОСТОРОННЕЕ ИЗМЕНЕНИЕ ЦЕН: исполнитель повышает цену уведомлением\n"
+        "- ПРЕДОПЛАТА БЕЗ ГАРАНТИЙ: 100% предоплата без поэтапной приёмки\n"
+        "Ссылайся на ГК РФ (глава 39), ЗоЗПП для B2C, ст.782 ГК РФ для расторжения."
+    ),
+    "insurance": (
+        "ДОГОВОР СТРАХОВАНИЯ / ПОЛИС.\n"
+        "Обрати внимание на:\n"
+        "- ИСКЛЮЧЕНИЯ ИЗ ПОКРЫТИЯ: длинный список случаев когда страховая НЕ платит\n"
+        "- ФРАНШИЗА: скрытая или завышенная франшиза обнуляет мелкие выплаты\n"
+        "- СРОКИ УВЕДОМЛЕНИЯ: 24 часа на уведомление о страховом случае (нереалистично)\n"
+        "- ОЦЕНКА УЩЕРБА: страховая назначает своего оценщика (конфликт интересов)\n"
+        "- СУБРОГАЦИЯ: страховая перекладывает расходы на клиента\n"
+        "- АВТОПРОДЛЕНИЕ: полис продлевается с повышенной ставкой без явного согласия\n"
+        "- ИЗНОС: выплата с учётом износа снижает компенсацию на 40-70%\n"
+        "- ТЕРРИТОРИЯ: покрытие только в определённом регионе, за пределами — отказ\n"
+        "Ссылайся на ГК РФ (глава 48), ФЗ 'Об обязательном страховании', ЗоЗПП."
+    ),
+    "other": (
+        "ОБЩИЙ ЮРИДИЧЕСКИЙ ДОКУМЕНТ. Проведи стандартный правовой аудит.\n"
+        "Обрати внимание на:\n"
+        "- Односторонние права одной из сторон\n"
+        "- Штрафные санкции несоразмерные нарушению\n"
+        "- Отказ от прав потребителя (если B2C)\n"
+        "- Арбитражные оговорки вместо суда\n"
+        "- Автопродление без явного согласия\n"
+        "- Размытые формулировки ('по усмотрению', 'в разумный срок')\n"
+        "- Полная предоплата без гарантий\n"
+        "- Конфиденциальность условий договора (запрет разглашать)\n"
+        "Ссылайся на ГК РФ, ЗоЗПП, отраслевые ФЗ по контексту."
+    ),
 }
 
 

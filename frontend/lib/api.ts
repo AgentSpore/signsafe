@@ -2,44 +2,32 @@ export type Severity = 1 | 2 | 3 | 4 | 5;
 
 export type ClauseType =
   // Commercial lease
-  | "personal_guarantee"
-  | "auto_renewal"
-  | "cam_charges"
-  | "holdover_penalty"
-  | "relocation_clause"
-  | "exclusive_use"
-  | "assignment_ban"
-  | "indemnification"
-  | "early_termination"
-  | "security_deposit"
-  | "rent_escalation"
-  | "maintenance_shift"
+  | "personal_guarantee" | "auto_renewal" | "cam_charges" | "holdover_penalty"
+  | "relocation_clause" | "exclusive_use" | "assignment_ban" | "indemnification"
+  | "early_termination" | "security_deposit" | "rent_escalation" | "maintenance_shift"
   // Elder care
-  | "care_escalation"
-  | "community_fee"
-  | "med_management"
-  | "move_out_notice"
-  | "medicaid_spend_down"
-  | "third_party_restriction"
-  | "arbitration_waiver"
-  | "responsible_party"
-  | "liability_cap"
-  | "discharge_rights"
-  | "holding_fee"
+  | "care_escalation" | "community_fee" | "med_management" | "move_out_notice"
+  | "medicaid_spend_down" | "third_party_restriction" | "arbitration_waiver"
+  | "responsible_party" | "liability_cap" | "discharge_rights" | "holding_fee"
   | "care_plan_change"
-  // Medical bill / EOB
-  | "balance_billing"
-  | "duplicate_charge"
-  | "upcoding"
-  | "unbundling"
-  | "facility_fee"
-  | "missing_adjustment"
-  | "stale_billing"
-  | "collection_markup"
-  | "phantom_charge"
-  | "modifier_abuse"
-  | "surprise_provider"
-  | "or_surcharge"
+  // Medical bill
+  | "balance_billing" | "duplicate_charge" | "upcoding" | "unbundling"
+  | "facility_fee" | "missing_adjustment" | "stale_billing" | "collection_markup"
+  | "phantom_charge" | "modifier_abuse" | "surprise_provider" | "or_surcharge"
+  // Employment
+  | "probation_violation" | "non_compete" | "ip_overreach" | "termination_penalty"
+  | "overtime_abuse" | "liability_shift" | "unilateral_change"
+  // Loan
+  | "hidden_commission" | "effective_rate_trap" | "prepayment_penalty"
+  | "variable_rate" | "cross_default" | "auto_debit" | "disproportionate_collateral"
+  // Insurance
+  | "coverage_exclusion" | "hidden_deductible" | "notification_trap"
+  | "depreciation_trap" | "auto_renewal_increase"
+  // Purchase
+  | "hidden_encumbrance" | "warranty_waiver" | "deposit_forfeiture" | "risk_transfer"
+  // Service
+  | "scope_ambiguity" | "cancellation_penalty" | "price_escalation"
+  | "data_lock_in" | "forced_addon"
   | "other";
 
 export interface RiskClause {
