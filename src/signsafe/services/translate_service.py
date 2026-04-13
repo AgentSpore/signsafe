@@ -59,7 +59,7 @@ class TranslateService:
         self._cache[_cache_key(text, locale)] = translated
 
     async def translate(self, items: list[str], target_locale: str) -> list[str]:
-        if target_locale == "en" or not items:
+        if target_locale == "ru" or not items:
             return items
 
         google_lang = LOCALE_TO_GOOGLE.get(target_locale, "en")
@@ -117,7 +117,7 @@ class TranslateService:
         client = await self._get_client()
         params = {
             "client": "gtx",
-            "sl": "en",
+            "sl": "ru",
             "tl": google_lang,
             "dt": "t",
             "q": text,
