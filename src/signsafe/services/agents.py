@@ -52,6 +52,8 @@ For each flagged item:
   Purchase: hidden_encumbrance, warranty_waiver, deposit_forfeiture, risk_transfer
   Service: scope_ambiguity, cancellation_penalty, price_escalation,
     data_lock_in, forced_addon
+  Residential lease (tenant): security_deposit, early_termination, rent_escalation,
+    unilateral_change, maintenance_shift, third_party_restriction, landlord_termination
   Fallback: other
 - Rate severity 1-5:
   1 INFO — informational only

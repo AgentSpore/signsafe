@@ -102,6 +102,14 @@ export const UI_EN: Record<string, string> = {
   "analysis.translating": "ПЕРЕВОДИМ...",
   "analysis.top3": "ТОП-3 ПРОБЛЕМЫ",
   "analysis.flagged": "ОБНАРУЖЕННЫЕ ПРОБЛЕМЫ",
+
+  // Tenant-lease legality layer + pre-signing checklist
+  "legality.void": "ВЕРОЯТНО НИЧТОЖНО",
+  "legality.disputable": "МОЖНО ОСПОРИТЬ",
+  "legality.ok": "ДОПУСТИМО",
+  "checklist.title": "НА ЧТО ДАВИТЬ ДО ПОДПИСАНИЯ",
+  "checklist.disclaimer":
+    "Информация носит справочный характер и не является юридической консультацией. Оценка законности предварительна — для важных решений обратитесь к юристу.",
   "analysis.noClauses": "Подводных камней не обнаружено.",
   "analysis.riskScore": "ОЦЕНКА РИСКА",
   "analysis.breakdown": "РАЗБИВКА ПО ОПАСНОСТИ",

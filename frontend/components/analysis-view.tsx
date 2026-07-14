@@ -72,6 +72,12 @@ export function AnalysisView({
   };
 
   const sorted = displayData.risk_clauses.slice().sort((a, b) => b.severity - a.severity);
+  // Pre-signing checklist — tenant-profile clauses classified void / disputable, void first.
+  const isTenantMode = data.industry === "residential_lease";
+  const legalityRank: Record<string, number> = { void: 0, disputable: 1 };
+  const checklist = displayData.risk_clauses
+    .filter((c) => c.legality === "void" || c.legality === "disputable")
+    .sort((a, b) => (legalityRank[a.legality!] ?? 9) - (legalityRank[b.legality!] ?? 9));
 
   return (
     <main className="min-h-screen bg-[var(--color-bg-base)] text-[var(--color-ink-primary)]">
@@ -156,6 +162,51 @@ export function AnalysisView({
                     </li>
                   ))}
                 </ol>
+              </div>
+            )}
+
+            {(isTenantMode || checklist.length > 0) && (
+              <div className="border border-[var(--color-accent-signal)] bg-[var(--color-bg-surface)] p-8">
+                {checklist.length > 0 && (
+                  <>
+                    <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-accent-signal)] mb-3">
+                      ─── {t("checklist.title")} · {checklist.length} ───
+                    </div>
+                    <ul className="space-y-4 font-body">
+                      {checklist.map((c, i) => (
+                        <li key={i} className="flex gap-3">
+                          <span aria-hidden className="pt-0.5">
+                            {c.legality === "void" ? "🔴" : "🟠"}
+                          </span>
+                          <div>
+                            <div className="text-[var(--color-ink-primary)] font-semibold">
+                              {c.title}
+                            </div>
+                            {c.legality_gloss && (
+                              <div className="text-sm text-[var(--color-ink-secondary)] leading-relaxed mt-0.5">
+                                {c.legality_gloss}
+                              </div>
+                            )}
+                            {c.norm_ref && (
+                              <div className="font-mono text-[10px] text-[var(--color-ink-tertiary)] mt-1">
+                                {c.norm_ref}
+                              </div>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                <p
+                  className={`font-mono text-[10px] tracking-wide uppercase text-[var(--color-ink-tertiary)] leading-relaxed ${
+                    checklist.length > 0
+                      ? "mt-6 pt-4 border-t border-[var(--color-divider)]"
+                      : ""
+                  }`}
+                >
+                  {t("checklist.disclaimer")}
+                </p>
               </div>
             )}
 

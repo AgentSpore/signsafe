@@ -35,7 +35,11 @@ export type ClauseType =
   | "special_assessment" | "excessive_fine" | "lien_on_property"
   | "rental_ban" | "pet_restriction" | "architectural_control"
   | "reserve_deficit" | "selective_enforcement" | "transfer_fee"
+  // Residential lease (tenant)
+  | "landlord_termination"
   | "other";
+
+export type Legality = "void" | "disputable" | "ok";
 
 export interface RiskClause {
   clause_type: ClauseType;
@@ -47,6 +51,10 @@ export interface RiskClause {
   why_risky: string;
   negotiation_counter: string;
   benchmark: string | null;
+  // Tenant-lease legality layer — present only for the residential-lease profile.
+  legality?: Legality | null;
+  legality_gloss?: string | null;
+  norm_ref?: string | null;
 }
 
 export type Recommendation =

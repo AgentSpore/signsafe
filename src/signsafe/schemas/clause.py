@@ -96,8 +96,14 @@ ClauseType = Literal[
     "reserve_deficit",
     "selective_enforcement",
     "transfer_fee",
+    # Residential lease (tenant) types
+    "landlord_termination",
     "other",
 ]
+
+# Informational legality classification for the residential-lease tenant profile.
+# Layered on top of the existing clause detection — see services/tenant_legality.py.
+Legality = Literal["void", "disputable", "ok"]
 
 
 class ClauseSeverity(IntEnum):
@@ -120,3 +126,15 @@ class RiskClause(BaseModel):
     why_risky: str = Field(description="Concrete rationale why it's dangerous")
     negotiation_counter: str = Field(description="Suggested counter-language")
     benchmark: str | None = Field(default=None, description="Typical market terms for comparison")
+    # Tenant-lease legality layer (populated only in the residential-lease tenant profile;
+    # None for every other analysis mode — see services/tenant_legality.py).
+    legality: Legality | None = Field(
+        default=None,
+        description="Informational legality class for tenant profile: void / disputable / ok",
+    )
+    legality_gloss: str | None = Field(
+        default=None, description="Plain-RU one-line gloss for the legality class (informational)"
+    )
+    norm_ref: str | None = Field(
+        default=None, description="Reference to the applicable RU norm (ГК РФ / ЖК РФ article)"
+    )

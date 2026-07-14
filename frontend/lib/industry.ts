@@ -15,6 +15,7 @@ export type Industry =
   | "insurance"
   | "auto_purchase"
   | "hoa"
+  | "residential_lease"
   | "other";
 
 export interface DocType {
@@ -37,7 +38,12 @@ export const DOCUMENT_TYPES: DocType[] = [
   { id: "medical_bill", labelRu: "Мед. счёт", labelEn: "Medical Bill", hintRu: "Больница, клиника", hintEn: "Hospital, clinic" },
   { id: "auto_purchase", labelRu: "Покупка авто", labelEn: "Auto Purchase", hintRu: "Дилер, допы, кредит", hintEn: "Dealer, add-ons, loan" },
   { id: "hoa", labelRu: "ТСЖ / HOA", labelEn: "HOA / CC&R", hintRu: "Устав, взносы, штрафы", hintEn: "Rules, fees, fines" },
+  { id: "residential_lease", labelRu: "Аренда жилья", labelEn: "Residential Lease", hintRu: "Глазами арендатора", hintEn: "Tenant lens" },
 ];
+
+export function isResidentialLease(industry: Industry | string | null): boolean {
+  return industry === "residential_lease";
+}
 
 // Legacy compat
 export const COMMERCIAL_INDUSTRIES = DOCUMENT_TYPES.filter(d =>

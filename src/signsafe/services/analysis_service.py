@@ -9,6 +9,7 @@ from signsafe.schemas.document import AnalysisResult
 from signsafe.schemas.industry import get_focus, is_medical_bill
 from signsafe.services.agents import lease_agent, make_model
 from signsafe.services.pdf_service import ExtractedDocument
+from signsafe.services.tenant_legality import enrich_tenant_legality
 
 
 def _doc_label(industry: str | None) -> str:
@@ -42,7 +43,7 @@ class AnalysisService:
             try:
                 result = await lease_agent.run(prompt, model=make_model(model_name))
                 logger.info("Analysis succeeded with {}", model_name)
-                return result.output
+                return enrich_tenant_legality(result.output, industry)
             except Exception as exc:
                 logger.warning("Model {} failed: {}", model_name, type(exc).__name__)
                 last_exc = exc

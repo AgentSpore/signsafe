@@ -22,6 +22,12 @@ export function ClauseCard({
   };
   const meta = SEVERITY_META[clause.severity];
   const isCritical = clause.severity >= 4;
+  const LEGALITY_META: Record<string, { label: string; color: string; emoji: string }> = {
+    void: { label: t("legality.void"), color: "var(--color-risk-deal-breaker)", emoji: "🔴" },
+    disputable: { label: t("legality.disputable"), color: "var(--color-risk-warning)", emoji: "🟠" },
+    ok: { label: t("legality.ok"), color: "var(--color-risk-caution)", emoji: "🟢" },
+  };
+  const legality = clause.legality ? LEGALITY_META[clause.legality] : null;
 
   return (
     <article
@@ -58,6 +64,34 @@ export function ClauseCard({
           {meta.label}
         </div>
       </div>
+
+      {/* Legality classification (tenant profile only) */}
+      {legality && (
+        <div
+          className="mb-5 border p-3"
+          style={{ borderColor: legality.color, background: "var(--color-bg-base)" }}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <span aria-hidden>{legality.emoji}</span>
+            <span
+              className="font-mono text-[10px] tracking-[0.2em] uppercase font-semibold"
+              style={{ color: legality.color }}
+            >
+              {legality.label}
+            </span>
+            {clause.norm_ref && (
+              <span className="font-mono text-[10px] text-[var(--color-ink-tertiary)]">
+                · {clause.norm_ref}
+              </span>
+            )}
+          </div>
+          {clause.legality_gloss && (
+            <p className="font-body text-sm text-[var(--color-ink-secondary)] leading-relaxed">
+              {clause.legality_gloss}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Original quote */}
       <blockquote className="border-l-2 border-[var(--color-ink-tertiary)] pl-4 py-1 mb-5">

@@ -21,6 +21,8 @@ Industry = Literal[
     "auto_purchase",
     # HOA / CC&R
     "hoa",
+    # Residential lease — tenant lens
+    "residential_lease",
     "other",
 ]
 
@@ -33,6 +35,8 @@ COMMERCIAL_INDUSTRIES: set[str] = {
 ELDER_CARE_INDUSTRIES: set[str] = {"elder_care"}
 
 MEDICAL_BILL_INDUSTRIES: set[str] = {"medical_bill"}
+
+RESIDENTIAL_LEASE_INDUSTRIES: set[str] = {"residential_lease"}
 
 # Document type groupings for UI
 DOCUMENT_TYPES: list[dict[str, str]] = [
@@ -47,6 +51,7 @@ DOCUMENT_TYPES: list[dict[str, str]] = [
     {"id": "medical_bill", "label_ru": "Медицинский счёт", "label_en": "Medical Bill", "hint_ru": "Больничные счета, ДМС, клиника", "hint_en": "Hospital bills, insurance claims"},
     {"id": "auto_purchase", "label_ru": "Покупка авто", "label_en": "Auto Purchase", "hint_ru": "Автосалон, допы, кредит, trade-in", "hint_en": "Dealership, add-ons, auto loan"},
     {"id": "hoa", "label_ru": "ТСЖ / HOA", "label_en": "HOA / CC&R", "hint_ru": "Устав, правила, взносы, штрафы", "hint_en": "Rules, assessments, fines, liens"},
+    {"id": "residential_lease", "label_ru": "Аренда жилья", "label_en": "Residential Lease", "hint_ru": "Глазами арендатора: депозит, выселение, износ", "hint_en": "Tenant lens: deposit, eviction, wear"},
 ]
 
 
@@ -191,6 +196,27 @@ INDUSTRY_FOCUS: dict[str, str] = {
         "- Конфиденциальность условий договора (запрет разглашать)\n"
         "Ссылайся на ГК РФ, ЗоЗПП, отраслевые ФЗ по контексту."
     ),
+    "residential_lease": (
+        "ДОГОВОР АРЕНДЫ ЖИЛЬЯ — ГЛАЗАМИ АРЕНДАТОРА (НАНИМАТЕЛЯ).\n"
+        "Это договор найма/аренды жилого помещения. Читатель — арендатор (наниматель), "
+        "физлицо. Твоя задача — защитить его от невыгодных и незаконных условий.\n"
+        "Обрати особое внимание на типичные ловушки для арендатора и присвой "
+        "clause_type строго из списка:\n"
+        "- НЕВОЗВРАТ / УДЕРЖАНИЕ ДЕПОЗИТА: удержание обеспечительного платежа за "
+        "естественный износ или без обоснования → clause_type=security_deposit\n"
+        "- ШТРАФ ЗА ДОСРОЧНОЕ РАСТОРЖЕНИЕ арендатором → clause_type=early_termination\n"
+        "- ОДНОСТОРОННЕЕ ПОВЫШЕНИЕ АРЕНДНОЙ ПЛАТЫ (чаще раза в год / по усмотрению "
+        "арендодателя) → clause_type=rent_escalation\n"
+        "- ОДНОСТОРОННЕЕ ИЗМЕНЕНИЕ ДРУГИХ УСЛОВИЙ арендодателем → clause_type=unilateral_change\n"
+        "- ОТВЕТСТВЕННОСТЬ АРЕНДАТОРА ЗА ЕСТЕСТВЕННЫЙ ИЗНОС → clause_type=maintenance_shift\n"
+        "- ЗАПРЕТ НА РЕГИСТРАЦИЮ / ПРОЖИВАНИЕ ЧЛЕНОВ СЕМЬИ ИЛИ ТРЕТЬИХ ЛИЦ "
+        "→ clause_type=third_party_restriction\n"
+        "- ВНЕСУДЕБНОЕ ВЫСЕЛЕНИЕ / НЕМОТИВИРОВАННОЕ ДОСРОЧНОЕ РАСТОРЖЕНИЕ АРЕНДОДАТЕЛЕМ "
+        "→ clause_type=landlord_termination\n"
+        "Говори понятным языком для арендатора без юридического образования. "
+        "Ссылайся на ГК РФ (глава 34, 35 — аренда и наём жилья) и ЖК РФ. "
+        "НЕ давай указаний 'подавайте в суд' — только информируй о возможных рисках."
+    ),
     "auto_purchase": (
         "ДОГОВОР КУПЛИ-ПРОДАЖИ АВТОМОБИЛЯ / PURCHASE AGREEMENT ОТ ДИЛЕРА.\n"
         "Обрати внимание на:\n"
@@ -241,3 +267,7 @@ def is_elder_care(industry: str | None) -> bool:
 
 def is_medical_bill(industry: str | None) -> bool:
     return (industry or "").lower() in MEDICAL_BILL_INDUSTRIES
+
+
+def is_residential_lease(industry: str | None) -> bool:
+    return (industry or "").lower() in RESIDENTIAL_LEASE_INDUSTRIES
