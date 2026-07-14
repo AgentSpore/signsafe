@@ -15,6 +15,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
 
+# Node runtime to serve the Next.js frontend (glibc binary from the debian
+# node:20-slim build stage, compatible with this debian python:3.13-slim base)
+COPY --from=frontend-build /usr/local/bin/node /usr/local/bin/node
+
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 

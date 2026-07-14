@@ -11,7 +11,7 @@ BACKEND_PID=$!
 cd frontend
 export BACKEND_URL=http://localhost:8894
 if [ -d ".next" ]; then
-    npx next start -p 3000 &
+    ./node_modules/.bin/next start -p 3000 &
 else
     npm run dev -- -p 3000 &
 fi
