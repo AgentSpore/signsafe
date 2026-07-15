@@ -11,7 +11,7 @@ failure path, and asserts the sentinel never appears in captured log output.
 
 from __future__ import annotations
 
-import re
+import ast
 from pathlib import Path
 
 import pytest
@@ -120,32 +120,67 @@ async def test_negotiation_provider_error_does_not_leak_to_logs(
 
 # --- No logger call may format an exception VALUE -----------------------------
 
-_DOCSTRING = re.compile(r'"""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\'')
-
-
-def _code_only(source: str) -> str:
-    """Strip docstrings and # comments.
-
-    Prose DOCUMENTING the anti-pattern (errors.py spells it out so the rule is
-    discoverable) must not be mistaken for the anti-pattern itself — while real code must
-    still be caught. Covered by test_logger_guard_would_catch_a_real_offender below.
-    """
-    without_docstrings = _DOCSTRING.sub("", source)
-    return "\n".join(
-        line for line in without_docstrings.splitlines()
-        if not line.strip().startswith("#")
+def _is_safe_type_name(node: ast.AST) -> bool:
+    """True for `type(<anything>).__name__` — the sanctioned way to log an exception."""
+    return (
+        isinstance(node, ast.Attribute)
+        and node.attr == "__name__"
+        and isinstance(node.value, ast.Call)
+        and isinstance(node.value.func, ast.Name)
+        and node.value.func.id == "type"
     )
 
 
+def _leaked_names(node: ast.AST, exc_names: set[str]) -> set[str]:
+    """Names from `except ... as NAME` that this expression would render into a string.
+
+    Skips `type(exc).__name__` subtrees entirely — that renders the class name, not the
+    exception's message.
+    """
+    leaks: set[str] = set()
+
+    def visit(n: ast.AST) -> None:
+        if _is_safe_type_name(n):
+            return  # whole subtree is safe; do not descend
+        if isinstance(n, ast.Name) and n.id in exc_names:
+            leaks.add(n.id)
+        for child in ast.iter_child_nodes(n):
+            visit(child)
+
+    visit(node)
+    return leaks
+
+
 def _logger_value_offenders(source: str, name: str = "?") -> list[str]:
-    offenders = []
-    for num, line in enumerate(_code_only(source).splitlines(), 1):
-        stripped = line.strip()
-        if "logger." not in stripped:
+    """AST guard: no `logger.*` call may render an exception VALUE.
+
+    Structural, so it is immune to the naming/formatting variations a source-text grep
+    misses — any handler name (exc/err/error/ex/...), f-strings, %-formatting, .format(),
+    multiline calls, keyword args — and it needs no docstring/comment stripping, because
+    prose is not code to an AST.
+
+    HONEST LIMIT: it tracks the name bound by `except ... as NAME`. It does NOT follow the
+    value through an intermediate binding (`msg = str(exc); logger.error(msg)`) or into a
+    helper function. Those remain a review concern.
+    """
+    offenders: list[str] = []
+    tree = ast.parse(source)
+    for handler in (n for n in ast.walk(tree) if isinstance(n, ast.ExceptHandler)):
+        if not handler.name:
             continue
-        # Passing `exc` / `e` bare as a formatting arg logs its MESSAGE.
-        if ", exc)" in stripped or ", e)" in stripped or "{exc}" in stripped:
-            offenders.append(f"{name}:{num}: {stripped}")
+        exc_names = {handler.name}
+        for call in (n for n in ast.walk(handler) if isinstance(n, ast.Call)):
+            func = call.func
+            if not (isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name)
+                    and func.value.id == "logger"):
+                continue
+            for arg in [*call.args, *(kw.value for kw in call.keywords)]:
+                leaked = _leaked_names(arg, exc_names)
+                if leaked:
+                    offenders.append(
+                        f"{name}:{call.lineno}: logger.{func.attr}(...) renders "
+                        f"{sorted(leaked)} — use type({handler.name}).__name__"
+                    )
     return offenders
 
 
@@ -154,19 +189,48 @@ def test_no_logger_call_interpolates_a_raw_exception() -> None:
     for path in SRC.rglob("*.py"):
         offenders += _logger_value_offenders(path.read_text(encoding="utf-8"), path.name)
     assert not offenders, (
-        "logger call formats an exception VALUE — use type(exc).__name__:\n"
-        + "\n".join(offenders)
+        "logger call renders an exception VALUE — its message may embed the contract "
+        "text. Log type(exc).__name__ instead:\n" + "\n".join(offenders)
     )
 
 
-def test_logger_guard_would_catch_a_real_offender() -> None:
-    # Guard the guard: stripping docs must not make the check vacuous.
-    assert _logger_value_offenders('logger.error("boom: {}", exc)')
-    assert _logger_value_offenders('logger.warning("x {exc}")')
-    # ...but the safe form and pure documentation pass.
-    assert not _logger_value_offenders('logger.error("boom: {}", type(exc).__name__)')
-    assert not _logger_value_offenders('"""Never write logger.error("x: {}", exc) here."""')
-    assert not _logger_value_offenders('# logger.error("x: {}", exc)')
+@pytest.mark.parametrize("snippet", [
+    # The bare form the old source-text guard caught.
+    "try:\n    x()\nexcept Exception as exc:\n    logger.error('boom: {}', exc)\n",
+    # Names the old guard MISSED.
+    "try:\n    x()\nexcept Exception as err:\n    logger.error('boom: {}', err)\n",
+    "try:\n    x()\nexcept Exception as error:\n    logger.warning('boom: {}', error)\n",
+    "try:\n    x()\nexcept Exception as ex:\n    logger.info('boom: {}', ex)\n",
+    # Formatting styles the old guard MISSED.
+    "try:\n    x()\nexcept Exception as err:\n    logger.error(f'boom {err}')\n",
+    "try:\n    x()\nexcept Exception as ex:\n    logger.error('boom %s' % ex)\n",
+    "try:\n    x()\nexcept Exception as ex:\n    logger.error('boom {}'.format(ex))\n",
+    "try:\n    x()\nexcept Exception as exc:\n    logger.error(str(exc))\n",
+    # Multiline call the old guard MISSED.
+    "try:\n    x()\nexcept Exception as err:\n    logger.error(\n        'boom: {}',\n        err,\n    )\n",
+    # Keyword argument.
+    "try:\n    x()\nexcept Exception as err:\n    logger.error('boom', exc_info=err)\n",
+    # Nested attribute access on the exception still renders its data.
+    "try:\n    x()\nexcept Exception as err:\n    logger.error('boom: {}', err.args)\n",
+])
+def test_ast_guard_catches_every_leak_shape(snippet: str) -> None:
+    assert _logger_value_offenders(snippet), f"guard missed a real leak:\n{snippet}"
+
+
+@pytest.mark.parametrize("snippet", [
+    # The sanctioned form.
+    "try:\n    x()\nexcept Exception as exc:\n    logger.error('boom: {}', type(exc).__name__)\n",
+    "try:\n    x()\nexcept Exception as err:\n    logger.error(f'boom {type(err).__name__}')\n",
+    # Unrelated locals are not exceptions.
+    "try:\n    x()\nexcept Exception as exc:\n    logger.info('pages: {}', num_pages)\n",
+    # Bare except binds no name.
+    "try:\n    x()\nexcept Exception:\n    logger.error('boom')\n",
+    # Prose is not code — no stripping needed, which is the point of the AST guard.
+    '"""Never write logger.error("x: {}", exc) here."""\n',
+    '# logger.error("x: {}", exc)\n',
+])
+def test_ast_guard_does_not_fire_on_safe_code(snippet: str) -> None:
+    assert not _logger_value_offenders(snippet), f"guard false-positived:\n{snippet}"
 
 
 def test_user_message_error_is_the_only_echoable_error() -> None:
