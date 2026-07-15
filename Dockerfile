@@ -9,10 +9,11 @@ RUN npm run build
 FROM python:3.13-slim
 WORKDIR /app
 
-# System deps: tesseract for OCR fallback on scanned PDFs
+# System deps: tesseract for OCR fallback on scanned PDFs (RU + EN language packs)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     tesseract-ocr-eng \
+    tesseract-ocr-rus \
     && rm -rf /var/lib/apt/lists/*
 
 # Node runtime to serve the Next.js frontend (glibc binary from the debian

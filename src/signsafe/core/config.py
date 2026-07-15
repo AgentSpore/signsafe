@@ -19,6 +19,20 @@ class Settings(BaseModel):
         "z-ai/glm-4.5-air:free",
     ])
     max_upload_mb: int = 10
+    # Resource controls (152-ФЗ hardening + zip/decompression-bomb guard)
+    max_pdf_pages: int = 40
+    ocr_timeout_seconds: int = 60
+
+    # Versioned consent required by /api/analyze (152-ФЗ). Requests must carry one of
+    # these; consent is validated but NOT stored (the service stays stateless).
+    accepted_consent_versions: list[str] = Field(default_factory=lambda: ["ru-v1"])
+
+    # CORS — tightened from "*" to the known origins (config-driven).
+    allowed_origins: list[str] = Field(default_factory=lambda: [
+        "https://signsafe.agentspore.com",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ])
 
     # SMTP for magic-link emails (optional — falls back to dev mode if not configured)
     smtp_host: str = ""
@@ -38,8 +52,18 @@ class Settings(BaseModel):
         return bool(self.smtp_host and self.smtp_user and self.smtp_pass)
 
 
+def _env_origins() -> list[str] | None:
+    raw = os.getenv("ALLOWED_ORIGINS", "").strip()
+    if not raw:
+        return None
+    return [o.strip() for o in raw.split(",") if o.strip()]
+
+
+_origins = _env_origins()
+
 settings = Settings(
     openrouter_api_key=os.getenv("OPENROUTER_API_KEY", ""),
+    **({"allowed_origins": _origins} if _origins else {}),
     smtp_host=os.getenv("SMTP_HOST", ""),
     smtp_port=int(os.getenv("SMTP_PORT", "587")),
     smtp_user=os.getenv("SMTP_USER", ""),

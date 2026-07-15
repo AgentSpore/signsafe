@@ -105,6 +105,10 @@ ClauseType = Literal[
 # Layered on top of the existing clause detection — see services/tenant_legality.py.
 Legality = Literal["void", "disputable", "ok"]
 
+# Free-model honesty layer: per-clause confidence. When the model cannot decide with
+# enough context it abstains ("insufficient") and severity is left None (no forced color).
+Confidence = Literal["high", "medium", "insufficient"]
+
 
 class ClauseSeverity(IntEnum):
     INFO = 1
@@ -118,7 +122,16 @@ class RiskClause(BaseModel):
     """A single flagged clause with risk assessment."""
 
     clause_type: ClauseType
-    severity: ClauseSeverity
+    # Nullable so the free model can abstain (no forced severity color) when the clause
+    # context is insufficient. Existing consumers that always sent an int still validate.
+    severity: ClauseSeverity | None = Field(
+        default=None,
+        description="Severity 1-5, or None when the model abstains (insufficient context)",
+    )
+    confidence: Confidence | None = Field(
+        default=None,
+        description="Model self-assessed confidence: high / medium / insufficient",
+    )
     title: str = Field(description="Short human title, e.g. 'Unlimited Personal Guarantee'")
     original_text: str = Field(description="Exact quote from document")
     page_number: int = Field(ge=1)

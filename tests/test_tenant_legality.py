@@ -73,13 +73,14 @@ def test_preset_focus_is_tenant_lens() -> None:
 # --- Legality classification + tenant-trap coverage ---------------------------
 
 REQUIRED_TRAPS = {
-    "security_deposit": ("disputable", "622"),
-    "early_termination": ("disputable", "330"),
-    "rent_escalation": ("disputable", "614"),
+    # Norms per RU-law re-check: наём (гл. 35 ГК), not аренда (гл. 34).
+    "security_deposit": ("disputable", "381.1"),
+    "early_termination": ("disputable", "687"),  # 3-month notice right (ГК 687)
+    "rent_escalation": ("disputable", "682"),  # rent increase (ГК 682)
     "unilateral_change": ("disputable", "310"),
-    "maintenance_shift": ("disputable", "616"),
+    "maintenance_shift": ("disputable", "678"),  # wear vs damage (ГК 678)
     "third_party_restriction": ("disputable", "679"),
-    "landlord_termination": ("void", "619"),
+    "landlord_termination": ("void", "687"),  # court-only termination
 }
 
 
@@ -105,6 +106,33 @@ def test_landlord_eviction_is_void() -> None:
         _result([_clause("landlord_termination")]), "residential_lease"
     )
     assert result.risk_clauses[0].legality == "void"
+
+
+def test_rent_increase_and_early_termination_are_conditional_not_void() -> None:
+    # RU-law nuance: a contractual rent-increase mechanism (ГК 682) and an
+    # early-termination penalty (ГК 687) are CONTENTIOUS, never blanket 🔴 void.
+    for clause_type in ("rent_escalation", "early_termination"):
+        rule = TENANT_LEGALITY_RULES[clause_type]
+        assert rule.legality == "disputable", clause_type
+
+
+def test_rent_increase_gloss_states_contractual_carve_out() -> None:
+    # Must NOT claim the mere existence of a rent-increase clause is unlawful.
+    gloss = TENANT_LEGALITY_RULES["rent_escalation"].gloss_ru.lower()
+    assert "предусмотрено договором" in gloss
+    assert "682" in TENANT_LEGALITY_RULES["rent_escalation"].norm_ref
+
+
+def test_early_termination_gloss_states_three_month_notice() -> None:
+    gloss = TENANT_LEGALITY_RULES["early_termination"].gloss_ru.lower()
+    assert "три месяца" in gloss
+
+
+def test_glosses_use_naem_terminology() -> None:
+    # Residential lease to an individual = наниматель / наймодатель (not арендатор).
+    joined = " ".join(r.gloss_ru.lower() for r in TENANT_LEGALITY_RULES.values())
+    assert "наниматель" in joined or "наймодател" in joined
+    assert "арендодател" not in joined
 
 
 def test_unmapped_clause_left_unclassified() -> None:

@@ -2,20 +2,31 @@
 
 from __future__ import annotations
 
+import io
 from dataclasses import dataclass
 
 import pymupdf
 from loguru import logger
 
+from signsafe.core.config import settings
+
 try:
-    import pytesseract
-    from PIL import Image
+    # Optional OCR stack — guarded so the app runs without the tesseract binding present.
+    import pytesseract  # noqa: PLC0415 (optional-dependency guard, not a cycle)
+    from PIL import Image  # noqa: PLC0415 (optional-dependency guard, not a cycle)
     _HAS_OCR = True
 except ImportError:
     _HAS_OCR = False
 
 MIN_TEXT_CHARS = 100
 OCR_DPI = 200
+# OCR language: Russian + English (RU v1). Falls back handled by tesseract.
+OCR_LANG = "rus+eng"
+# Decompression-bomb guard: reject a single rendered page larger than this (pixels).
+# A 40-page A4 doc at 200 DPI renders ~3.9 MP/page; 25 MP is a generous ceiling.
+MAX_OCR_PIXELS = 25_000_000
+# OCR is considered low-quality if it yields fewer than this many chars per page.
+MIN_OCR_CHARS_PER_PAGE = 40
 
 
 @dataclass
@@ -29,6 +40,9 @@ class ExtractedDocument:
     num_pages: int
     pages: list[PageText]
     used_ocr: bool = False
+    # True when OCR ran but produced suspiciously little text (poor scan quality) —
+    # surfaced as a warning in the result so the reader can re-upload a clearer scan.
+    ocr_quality_low: bool = False
 
     @property
     def full_text(self) -> str:
@@ -47,7 +61,16 @@ class PDFService:
             doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
         except Exception as exc:
             logger.error("Failed to open PDF: {}", exc)
-            raise ValueError("Invalid PDF file") from exc
+            raise ValueError("Не удалось открыть PDF-файл — возможно, он повреждён.") from exc
+
+        # Page-count limit (resource control): reject oversized documents up front.
+        if doc.page_count > settings.max_pdf_pages:
+            page_count = doc.page_count
+            doc.close()
+            raise ValueError(
+                f"В документе {page_count} страниц — превышен лимит "
+                f"{settings.max_pdf_pages}. Загрузите документ меньшего объёма."
+            )
 
         pages: list[PageText] = []
         try:
@@ -59,17 +82,20 @@ class PDFService:
 
         total_chars = sum(len(p.text) for p in pages)
         used_ocr = False
+        ocr_quality_low = False
 
-        if total_chars < MIN_TEXT_CHARS and len(pages) > 0:
+        if total_chars < MIN_TEXT_CHARS and pages:
             logger.info("Low text yield ({}), triggering OCR fallback", total_chars)
             if not _HAS_OCR:
                 doc.close()
                 raise ValueError(
-                    "Scanned PDF detected but OCR not available. "
-                    "Install pytesseract + tesseract binary to enable OCR."
+                    "Похоже, это скан без текстового слоя, а модуль распознавания "
+                    "(OCR) недоступен. Загрузите PDF с текстовым слоем."
                 )
             pages = self._ocr_pages(doc)
             used_ocr = True
+            ocr_chars = sum(len(p.text) for p in pages)
+            ocr_quality_low = ocr_chars < MIN_OCR_CHARS_PER_PAGE * len(pages)
 
         doc.close()
 
@@ -79,22 +105,35 @@ class PDFService:
             sum(len(p.text) for p in pages),
             " via OCR" if used_ocr else "",
         )
-        return ExtractedDocument(num_pages=len(pages), pages=pages, used_ocr=used_ocr)
+        return ExtractedDocument(
+            num_pages=len(pages),
+            pages=pages,
+            used_ocr=used_ocr,
+            ocr_quality_low=ocr_quality_low,
+        )
 
     def _ocr_pages(self, doc: "pymupdf.Document") -> list[PageText]:
-        import io
-
         results: list[PageText] = []
         zoom = OCR_DPI / 72.0
         matrix = pymupdf.Matrix(zoom, zoom)
         for idx, page in enumerate(doc, start=1):
             pix = page.get_pixmap(matrix=matrix, alpha=False)
+            # Decompression-bomb guard: skip a page that renders to an enormous bitmap.
+            if pix.width * pix.height > MAX_OCR_PIXELS:
+                logger.warning(
+                    "Page {} renders to {}x{} px — exceeds OCR pixel cap, skipping",
+                    idx, pix.width, pix.height,
+                )
+                results.append(PageText(page_number=idx, text=""))
+                continue
             img_bytes = pix.tobytes("png")
             image = Image.open(io.BytesIO(img_bytes))
             try:
-                text = pytesseract.image_to_string(image).strip()
+                text = pytesseract.image_to_string(
+                    image, lang=OCR_LANG, timeout=settings.ocr_timeout_seconds
+                ).strip()
             except Exception as exc:
-                logger.error("OCR failed on page {}: {}", idx, exc)
+                logger.error("OCR failed on page {}: {}", idx, type(exc).__name__)
                 text = ""
             results.append(PageText(page_number=idx, text=text))
             logger.debug("OCR page {}: {} chars", idx, len(text))
