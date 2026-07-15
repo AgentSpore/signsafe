@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { deleteAnalysis, clearAllHistory, loadHistory, type HistoryEntry } from "@/lib/storage";
 import { SyncPanel } from "@/components/sync-panel";
 import { SiteFooter } from "@/components/site-footer";
-import { LocaleSwitcher } from "@/components/locale-switcher";
 import { useLocale } from "@/components/locale-provider";
 
 export default function HistoryPage() {
@@ -55,7 +54,6 @@ export default function HistoryPage() {
             <Link href="/" className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)] hover:text-[var(--color-ink-primary)]">
               {t("history.newAnalysis")}
             </Link>
-            <LocaleSwitcher />
           </div>
         </div>
       </header>

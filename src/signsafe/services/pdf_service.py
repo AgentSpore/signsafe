@@ -144,8 +144,17 @@ class PDFService:
                 )
                 results.append(PageText(page_number=idx, text=""))
                 continue
-            # Rendering (pixmap + PNG encode) is itself slow on adversarial pages, so it
-            # must sit INSIDE the budget: re-check the clock after it, not before.
+            # Rendering (pixmap + PNG encode) is itself slow on adversarial pages, so the
+            # clock is re-checked after it, not before.
+            #
+            # HONEST LIMIT — this budget is NOT a hard wall-clock bound. get_pixmap() is a
+            # synchronous, uninterruptible C call: once it starts, nothing here can stop
+            # it, so a single enormous page can overrun the deadline and we only notice
+            # afterwards. What actually bounds the work is the page cap
+            # (settings.max_pdf_pages) plus the pixel guard below, which reject the inputs
+            # that would make a render pathological. The deadline then bounds the
+            # ACCUMULATION across pages. Making the render itself interruptible needs a
+            # subprocess with a kill timeout — deliberately not done for the beta.
             pix = page.get_pixmap(matrix=matrix, alpha=False)
             img_bytes = pix.tobytes("png")
             image = Image.open(io.BytesIO(img_bytes))

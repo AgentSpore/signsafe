@@ -11,7 +11,7 @@ from loguru import logger
 from slowapi.errors import RateLimitExceeded
 from starlette.formparsers import MultiPartParser
 
-from signsafe.api import documents, health, negotiation, sync, translate
+from signsafe.api import documents, health, negotiation, sync
 from signsafe.core.body_limit import BodySizeLimitMiddleware
 from signsafe.core.config import settings
 from signsafe.core.database import close_db, init_db
@@ -75,4 +75,7 @@ app.include_router(health.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
 app.include_router(negotiation.router, prefix="/api")
 app.include_router(sync.router, prefix="/api")
-app.include_router(translate.router, prefix="/api")
+# NOTE: there is deliberately no /api/translate router. The translation capability was
+# removed in the RU-first beta: it was a public endpoint that forwarded arbitrary caller
+# strings to Google Translate, which made "OpenRouter is the only third party that
+# receives anything from your document" false. See services/outbound.py.

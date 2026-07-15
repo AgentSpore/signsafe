@@ -12,7 +12,6 @@ import {
 import { saveAnalysis, savePDFBytes } from "@/lib/storage";
 import { IndustrySelector } from "@/components/industry-selector";
 import { DemoButton } from "@/components/demo-button";
-import { LocaleSwitcher } from "@/components/locale-switcher";
 import { useLocale } from "@/components/locale-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { ConsentGate } from "@/components/consent-gate";
@@ -94,7 +93,6 @@ export default function LeasePage() {
                 retired in RU v1 and their routes now only explain the removal. */}
             <a href="#how" className="hidden md:inline hover:text-[var(--color-ink-primary)] transition">{t("nav.how")}</a>
             <Link href="/history" className="hover:text-[var(--color-ink-primary)] transition">{t("nav.history")}</Link>
-            <LocaleSwitcher />
           </nav>
         </div>
       </header>

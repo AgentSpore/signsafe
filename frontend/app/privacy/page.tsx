@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useLocale } from "@/components/locale-provider";
-import { LocaleSwitcher } from "@/components/locale-switcher";
 import { SiteFooter } from "@/components/site-footer";
 import { CONSENT_VERSION } from "@/lib/api";
 
@@ -15,10 +14,14 @@ import { CONSENT_VERSION } from "@/lib/api";
 export default function PrivacyPage() {
   const { t } = useLocale();
 
-  // §4 (third-party egress) and §5 (what we store) each carry a caveat — the part of the
-  // truth a reader would otherwise have to infer. Per-section so a future one can add its
-  // own without a second rendering path.
-  const CAVEATS: Record<number, boolean> = { 4: true, 5: true };
+  // §5 (what we store) carries a caveat — the part of the truth a reader would otherwise
+  // have to infer. Per-section so a future one can add its own without a second
+  // rendering path.
+  //
+  // §4 no longer has one: it used to explain what the translation service received, and
+  // the translate path has been removed entirely, so there is nothing left to caveat.
+  // OpenRouter is now the only third party, which §4 states plainly.
+  const CAVEATS: Record<number, boolean> = { 5: true };
   const sections = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({
     title: t(`privacy.s${n}.title`),
     body: t(`privacy.s${n}.body`),
@@ -38,7 +41,6 @@ export default function PrivacyPage() {
             </div>
             <span className="font-mono text-sm tracking-widest uppercase">SignSafe</span>
           </Link>
-          <LocaleSwitcher />
         </div>
       </header>
 

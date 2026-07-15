@@ -11,7 +11,6 @@ import {
 } from "@/lib/api";
 import { saveAnalysis, savePDFBytes } from "@/lib/storage";
 import { DemoButton } from "@/components/demo-button";
-import { LocaleSwitcher } from "@/components/locale-switcher";
 import { useLocale } from "@/components/locale-provider";
 import { SiteFooter } from "@/components/site-footer";
 import { ConsentGate } from "@/components/consent-gate";
@@ -20,7 +19,7 @@ import { DOCUMENT_TYPES, type Industry } from "@/lib/industry";
 
 export default function HomePage() {
   const router = useRouter();
-  const { t, locale } = useLocale();
+  const { t } = useLocale();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -86,8 +85,6 @@ export default function HomePage() {
     setProgress(0);
   }
 
-  const isRu = locale === "ru";
-
   return (
     <main className="min-h-screen bg-[var(--color-bg-base)] text-[var(--color-ink-primary)]">
       <div className="fixed inset-0 grid-lines pointer-events-none opacity-40" />
@@ -104,7 +101,6 @@ export default function HomePage() {
             <a href="#how" className="hidden md:inline hover:text-[var(--color-ink-primary)] transition">{t("nav.how")}</a>
             <a href="#patterns" className="hidden md:inline hover:text-[var(--color-ink-primary)] transition">{t("nav.patterns")}</a>
             <Link href="/history" className="hover:text-[var(--color-ink-primary)] transition">{t("nav.history")}</Link>
-            <LocaleSwitcher />
           </nav>
         </div>
       </header>
@@ -199,10 +195,11 @@ export default function HomePage() {
                     }`}
                   >
                     <div className="font-mono text-[10px] tracking-widest uppercase leading-tight">
-                      {isRu ? dt.labelRu : dt.labelEn}
+                      {/* RU-only beta: no locale switch, so always the RU label. */}
+                      {dt.labelRu}
                     </div>
                     <div className="font-mono text-[9px] text-[var(--color-ink-tertiary)] mt-1 leading-tight">
-                      {isRu ? dt.hintRu : dt.hintEn}
+                      {dt.hintRu}
                     </div>
                   </button>
                 ))}

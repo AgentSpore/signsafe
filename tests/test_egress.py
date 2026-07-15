@@ -1,17 +1,25 @@
 """EGRESS INVARIANT enforcement.
 
-Three review rounds found the same class of bug: a new path to a third party that nobody
-remembered to redact. Prose ("remember to redact") demonstrably did not hold. These tests
-make the invariant structural — a new egress that skips the chokepoint fails the build.
+Successive reviews found the same class of bug: a new path to a third party that nobody
+remembered to redact. Prose ("remember to redact") demonstrably did not hold.
+
+SCOPE — these are source-text tripwires, not a sandbox. They catch FORGETTING (a new URL
+literal, an egress module that stops calling the chokepoint), not a deliberate bypass
+(runtime-assembled hostname, config-supplied host, text routed around the helper). See
+the "WHAT THE GUARD TESTS DO AND DO NOT GUARANTEE" section of services/outbound.py. The
+one runtime (non-source-text) assertion is test_openrouter_is_the_only_configured_host,
+which reads the provider actually wired into the agents.
 """
 
 from __future__ import annotations
 
 import re
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 
+from signsafe.services.agents import lease_agent, negotiation_agent, provider
 from signsafe.services.outbound import (
     EGRESS_REGISTRY,
     KNOWN_THIRD_PARTY_HOSTS,
@@ -58,6 +66,22 @@ def test_no_unregistered_third_party_host_appears_in_the_tree() -> None:
 def test_every_registered_egress_module_exists() -> None:
     for rel in EGRESS_REGISTRY:
         assert (SRC / rel).is_file(), f"registered egress module missing: {rel}"
+
+
+def test_openrouter_is_the_only_configured_host() -> None:
+    """RUNTIME check (not source text): the base_url actually wired into the agents.
+
+    This is the one assertion that survives a renamed constant or a moved literal — it
+    inspects the live provider object the agents will really call.
+    """
+    host = urlparse(str(provider.base_url)).hostname
+    assert host in KNOWN_THIRD_PARTY_HOSTS, f"agents are wired to an unknown host: {host}"
+    assert KNOWN_THIRD_PARTY_HOSTS == {"openrouter.ai"}, (
+        "The privacy copy states OpenRouter is the ONLY third party receiving anything "
+        "document-derived. Adding a host here REQUIRES updating the user-facing copy."
+    )
+    # Both agents exist and share that single provider.
+    assert lease_agent is not None and negotiation_agent is not None
 
 
 @pytest.mark.parametrize("rel,dest", sorted(EGRESS_REGISTRY.items()))

@@ -20,10 +20,12 @@ import { SiteFooter } from "./site-footer";
 /**
  * The result view is RU-only for the beta.
  *
- * It previously translated the analysis into the selected locale via `translateAnalysis`,
- * which egressed model-derived prose to Google Translate. That path is deleted (see
- * lib/translate.ts): the analysis is rendered exactly as the backend returned it, so the
- * only third party that ever sees anything derived from the document is OpenRouter.
+ * It previously translated the analysis into the selected locale, which egressed
+ * model-derived prose to Google Translate. The whole translate path — including our own
+ * public /api/translate endpoint — has been removed (see
+ * src/signsafe/services/outbound.py). The analysis is rendered exactly as the backend
+ * returned it, so the only third party that ever sees anything derived from the document
+ * is OpenRouter.
  */
 export function AnalysisView({
   data,

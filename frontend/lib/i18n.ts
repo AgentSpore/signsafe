@@ -1,19 +1,13 @@
 "use client";
 
-export type Locale = "ru" | "en" | "zh" | "es" | "de" | "fr";
-
-export const LOCALES: { code: Locale; label: string; native: string }[] = [
-  { code: "ru", label: "Russian", native: "Русский" },
-  { code: "en", label: "English", native: "English" },
-  { code: "zh", label: "Chinese", native: "中文" },
-  { code: "es", label: "Spanish", native: "Español" },
-  { code: "de", label: "German", native: "Deutsch" },
-  { code: "fr", label: "French", native: "Français" },
-];
-
-// Russian-first UI. These are OUR OWN interface strings — the only text ever sent to the
-// translation service (Google), and only when the user picks a non-RU locale. Analysis
-// results are RU-only in the beta and are never translated; see lib/translate.ts.
+// RU-only interface for the beta. There is no locale switching and no translation
+// round-trip: the previous implementation sent these strings to Google Translate through
+// our own public /api/translate endpoint, which also accepted arbitrary caller text. The
+// endpoint and the whole translate path were removed so OpenRouter is the ONLY third
+// party that receives anything (see src/signsafe/services/outbound.py).
+//
+// This is the RU source dictionary, rendered directly by components/locale-provider.tsx.
+// (Name kept as UI_EN to avoid churn across ~20 call sites; the content is Russian.)
 export const UI_EN: Record<string, string> = {
   // Navigation
   "nav.how": "Как работает",
@@ -101,7 +95,6 @@ export const UI_EN: Record<string, string> = {
   "analysis.pages": "СТРАНИЦ",
   "analysis.clausesFlagged": "ПУНКТОВ ОБНАРУЖЕНО",
   "analysis.summary": "РЕЗЮМЕ",
-  "analysis.translating": "ПЕРЕВОДИМ...",
   "analysis.top3": "ТОП-3 ПРОБЛЕМЫ",
   "analysis.flagged": "ОБНАРУЖЕННЫЕ ПРОБЛЕМЫ",
 
@@ -327,10 +320,7 @@ export const UI_EN: Record<string, string> = {
     "До того как текст покинет наш сервер, мы автоматически заменяем на «[СКРЫТО]» найденные по шаблонам: ФИО, паспортные данные, адреса регистрации и проживания, телефоны, адреса электронной почты, номера банковских счетов и карт, ИНН, СНИЛС, блоки подписей. После разбора мы показываем, какие категории были замаскированы. Маскирование выполняется по регулярным выражениям и не гарантирует полноту: отдельные фрагменты персональных данных могут остаться в тексте.",
   "privacy.s4.title": "4. Куда уходит текст",
   "privacy.s4.body":
-    "Замаскированный текст договора передаётся AI-провайдеру OpenRouter и обрабатывается на серверах за пределами Российской Федерации. Это трансграничная передача. OpenRouter — единственный сторонний сервис, который получает хоть что-то из вашего документа. Мы используем бесплатные модели, поэтому не можем гарантировать, что провайдер не использует переданный текст для собственных целей. Не загружайте договоры, содержание которых для вас критично конфиденциально.",
-  "privacy.s4.caveat.title": "Про перевод и другие сервисы",
-  "privacy.s4.caveat":
-    "Перевод разбора на другие языки в бете отключён: ни текст договора, ни цитаты из него, ни результат разбора не передаются в переводческие сервисы. Разбор доступен только на русском. Если вы переключите язык интерфейса, во внешний переводчик (Google Translate) уйдут только наши собственные надписи интерфейса — кнопки и заголовки, написанные нами; данных из вашего документа среди них нет. На русском языке, который стоит по умолчанию, внешний переводчик не вызывается вовсе.",
+    "Замаскированный текст договора передаётся AI-провайдеру OpenRouter и обрабатывается на серверах за пределами Российской Федерации. Это трансграничная передача. OpenRouter — единственный сторонний сервис, который получает хоть что-то из вашего документа: других внешних получателей у текста договора нет, переводческие и аналитические сервисы мы не используем. Мы используем бесплатные модели, поэтому не можем гарантировать, что провайдер не использует переданный текст для собственных целей. Не загружайте договоры, содержание которых для вас критично конфиденциально.",
   "privacy.s5.title": "5. Что мы храним",
   "privacy.s5.body":
     "На сервере не сохраняется ничего. Принятый файл (до 10 МБ) обрабатывается только в оперативной памяти и освобождается сразу после извлечения текста. Ни файл, ни его текст, ни результат разбора, ни факт вашего согласия на сервере не остаются. Результат записывается только в localStorage вашего браузера — очистка данных сайта удаляет его безвозвратно.",
@@ -345,7 +335,7 @@ export const UI_EN: Record<string, string> = {
     "В договоре обычно есть данные второй стороны. Загружая файл, вы подтверждаете, что вправе передавать эти данные для описанной здесь обработки.",
   "privacy.s8.title": "8. Ограничения беты",
   "privacy.s8.body":
-    "Разбор выполняется бесплатной AI-моделью и может содержать ошибки, пропуски и неверные выводы. Оценка законности пунктов носит справочный характер. Сервис не оказывает юридических услуг и не заменяет юриста.",
+    "Разбор выполняется бесплатной AI-моделью и может содержать ошибки, пропуски и неверные выводы. Оценка законности пунктов носит справочный характер. Сервис не оказывает юридических услуг и не заменяет юриста. Интерфейс и разбор в бете доступны только на русском языке: перевода на другие языки нет, поэтому ни текст договора, ни результат разбора не попадают в переводческие сервисы.",
 
   // ─── Blocked results (typed backend refusals) ───
   "blocked.notContract.title": "Это не похоже на договор",
@@ -401,8 +391,3 @@ export const UI_EN: Record<string, string> = {
   "pdf.footer":
     "SIGNSAFE · ЭКСПЕРИМЕНТАЛЬНЫЙ РАЗБОР БЕСПЛАТНОЙ AI-МОДЕЛЬЮ · ВОЗМОЖНЫ ОШИБКИ · НЕ ЮРИДИЧЕСКАЯ КОНСУЛЬТАЦИЯ",
 };
-
-export function uiStringsList(): { keys: string[]; values: string[] } {
-  const keys = Object.keys(UI_EN);
-  return { keys, values: keys.map((k) => UI_EN[k]) };
-}

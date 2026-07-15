@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useLocale } from "./locale-provider";
-import { LocaleSwitcher } from "./locale-switcher";
 import { SiteFooter } from "./site-footer";
 
 /**
@@ -28,7 +27,6 @@ export function UnsupportedModePage() {
             </div>
             <span className="font-mono text-sm tracking-widest uppercase">SignSafe</span>
           </Link>
-          <LocaleSwitcher />
         </div>
       </header>
 
