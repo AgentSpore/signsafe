@@ -12,6 +12,7 @@ from slowapi.errors import RateLimitExceeded
 from starlette.formparsers import MultiPartParser
 
 from signsafe.api import documents, health, negotiation, sync, translate
+from signsafe.core.body_limit import BodySizeLimitMiddleware
 from signsafe.core.config import settings
 from signsafe.core.database import close_db, init_db
 from signsafe.core.rate_limit import limiter
@@ -63,6 +64,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Added LAST so it runs FIRST (Starlette applies middleware outermost-last): the body
+# must be size-checked before the multipart parser buffers it into memory.
+# NOTE: this is not a hard bound by itself — see core/body_limit.py for the Caddy
+# directive that is still required at the edge.
+app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_upload_bytes)
 
 app.include_router(health.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")

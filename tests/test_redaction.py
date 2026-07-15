@@ -3,9 +3,42 @@ while the clause structure the analysis relies on stays intact."""
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
+from signsafe.services import redaction as redaction_module
 from signsafe.services.redaction import PLACEHOLDER, redact
+
+
+# --- Pattern-class regression guard -------------------------------------------
+# ROOT CAUSE (found in round 2, missed once in round 3): under re.IGNORECASE the class
+# [А-ЯЁ] also matches lowercase, so every "must look like a Name/City" guard silently
+# stops discriminating and ordinary clause text gets redacted. This test catches the
+# whole CLASS instead of one sentence at a time — a new pattern reintroducing it fails.
+
+def _module_patterns() -> list[tuple[str, re.Pattern[str]]]:
+    return [
+        (name, obj)
+        for name, obj in vars(redaction_module).items()
+        if isinstance(obj, re.Pattern)
+    ]
+
+
+def test_module_actually_exposes_patterns_to_audit() -> None:
+    # Guard the guard: if the patterns move, the audit below must not silently pass.
+    assert len(_module_patterns()) >= 10
+
+
+@pytest.mark.parametrize("name,pattern", _module_patterns())
+def test_no_pattern_defeats_case_shape(name: str, pattern: re.Pattern[str]) -> None:
+    uses_case_shape = "А-ЯЁ" in pattern.pattern
+    global_ignorecase = bool(pattern.flags & re.IGNORECASE)
+    assert not (uses_case_shape and global_ignorecase), (
+        f"{name} combines a case-sensitive [А-ЯЁ] shape with global re.IGNORECASE — the "
+        f"shape is defeated (lowercase matches too) and clause text will be redacted. "
+        f"Scope the flag with (?i:...) on the label instead."
+    )
 
 _LEASE = """ДОГОВОР НАЙМА ЖИЛОГО ПОМЕЩЕНИЯ
 
@@ -91,6 +124,9 @@ def test_clause_structure_survives_redaction() -> None:
     "Стороны согласовали, что адрес для уведомлений может быть изменён.",
     # "в лице" followed by a role, not a name.
     "Организация в лице генерального директора действует на основании устава.",
+    # Lowercase "г." / "ул." inside ordinary prose — _ADDRESS_SHAPED under IGNORECASE
+    # would have matched the lowercase city shape and eaten the rest of the line.
+    "Срок найма исчисляется с 1 г. и продлевается сторонами по соглашению.",
 ])
 def test_clause_sentences_are_not_mistaken_for_pii_fields(sentence: str) -> None:
     out = redact(sentence)

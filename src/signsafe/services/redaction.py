@@ -77,9 +77,11 @@ _ADDRESS_LABEL = re.compile(
 )
 # Address-shaped value without a label/separator ("г. Москва, ул. Ленина, д. 5, кв. 12").
 # Deliberately narrow — requires the "г. <City>, ул." shape — to avoid eating clause text.
+# NO global re.IGNORECASE: it would make [А-ЯЁ] match lowercase and the city-name shape
+# would stop discriminating (the same defeat that broke _FIO_LABEL). Flags are scoped to
+# the literal street-type labels only. Enforced by test_no_pattern_defeats_case_shape.
 _ADDRESS_SHAPED = re.compile(
-    r"г\.\s*[А-ЯЁ][а-яё-]+,\s*(?:ул|пр-т|просп|пер|б-р|наб)\.[^\n]{0,60}",
-    re.IGNORECASE,
+    r"(?i:г)\.\s*[А-ЯЁ][а-яё-]+,\s*(?i:ул|пр-т|просп|пер|б-р|наб)\.[^\n]{0,60}"
 )
 # Signature blocks: dotted/underscored signature lines and М.П.
 _SIGNATURE = re.compile(r"(подпись[^\n]{0,40}?)[_\.]{3,}", re.IGNORECASE)

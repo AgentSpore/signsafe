@@ -1,8 +1,12 @@
 """Google Translate (unofficial) batch translator with in-memory cache.
 
 Uses translate.googleapis.com — free, no API key, fast (~50ms per call).
-Replaces the LLM-based translator which was slow and unreliable due to LLM
-dropping items / hitting OpenRouter rate limits.
+
+EGRESS: this is a third-party destination (see services/outbound.py, inventory item 3).
+Callers must not send raw document content here — frontend/lib/translate.ts sends only
+model-derived analysis prose, never extracted_pages[].text or original_text. Because the
+endpoint nevertheless accepts arbitrary client strings, EVERY item is pushed through the
+redaction chokepoint here as a backstop: a caller cannot make this service leak PII.
 """
 
 from __future__ import annotations
@@ -12,6 +16,8 @@ import hashlib
 
 import httpx
 from loguru import logger
+
+from signsafe.services.outbound import redact_for_egress
 
 GOOGLE_ENDPOINT = "https://translate.googleapis.com/translate_a/single"
 MAX_CACHE_ENTRIES = 5000
@@ -61,6 +67,11 @@ class TranslateService:
     async def translate(self, items: list[str], target_locale: str) -> list[str]:
         if target_locale == "ru" or not items:
             return items
+
+        # EGRESS CHOKEPOINT — redact BEFORE cache lookup and before anything is sent to
+        # Google. Done here rather than at the router so no caller of this service can
+        # bypass it. Idempotent, so already-clean analysis prose is unchanged.
+        items = [redact_for_egress(item) for item in items]
 
         google_lang = LOCALE_TO_GOOGLE.get(target_locale, "en")
 

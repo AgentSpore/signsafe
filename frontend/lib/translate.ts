@@ -63,23 +63,26 @@ export async function translateAnalysis(
     }
   }
 
-  // Flatten all translatable strings, keeping track of shape so we can reassemble.
-  // We translate EVERYTHING including original_text quotes AND the full extracted
-  // document pages — users want to read the contract in their language.
+  // PRIVACY INVARIANT — user document content is NEVER sent to the translation service.
+  //
+  // Translation egresses to Google Translate (a third party, see
+  // src/signsafe/services/outbound.py). We therefore translate ONLY model-derived
+  // analysis prose, which the model produced from already-redacted input.
+  //
+  // Deliberately NOT translated (they are the user's document, not our commentary):
+  //   * extracted_pages[].text — the raw contract as extracted, unredacted.
+  //   * risk_clauses[].original_text — a verbatim quote from the contract.
+  // Both are rendered in the original language; the UI notes they stay untranslated.
   const strings: string[] = [];
   strings.push(data.summary);
   data.top_3_concerns.forEach((c) => strings.push(c));
   data.risk_clauses.forEach((c) => {
     strings.push(c.title);
-    strings.push(c.original_text);
     strings.push(c.plain_english);
     strings.push(c.why_risky);
     strings.push(c.negotiation_counter);
     strings.push(c.benchmark || "");
   });
-  // Translate full document pages too (when available)
-  const pages = data.extracted_pages || [];
-  pages.forEach((p) => strings.push(p.text || ""));
 
   const translated = await apiTranslate(strings, locale);
   let idx = 0;
@@ -88,15 +91,12 @@ export async function translateAnalysis(
   const risk_clauses: RiskClause[] = data.risk_clauses.map((c) => ({
     ...c,
     title: translated[idx++],
-    original_text: translated[idx++],
+    // original_text intentionally preserved as-is — never leaves for translation.
+    original_text: c.original_text,
     plain_english: translated[idx++],
     why_risky: translated[idx++],
     negotiation_counter: translated[idx++],
     benchmark: translated[idx++] || null,
-  }));
-  const extracted_pages = pages.map((p) => ({
-    page_number: p.page_number,
-    text: translated[idx++] || p.text,
   }));
 
   const result: AnalysisData = {
@@ -104,7 +104,8 @@ export async function translateAnalysis(
     summary,
     top_3_concerns,
     risk_clauses,
-    extracted_pages,
+    // extracted_pages passed through untouched — the raw document is never translated.
+    extracted_pages: data.extracted_pages,
   };
 
   if (typeof window !== "undefined" && docId) {

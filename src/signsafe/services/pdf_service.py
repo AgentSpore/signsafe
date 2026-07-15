@@ -29,6 +29,11 @@ MAX_OCR_PIXELS = 25_000_000
 # OCR is considered low-quality if it yields fewer than this many chars per page.
 MIN_OCR_CHARS_PER_PAGE = 40
 
+_TIMEOUT_MSG = (
+    "Обработка документа заняла слишком много времени. "
+    "Загрузите документ меньшего объёма или с текстовым слоем."
+)
+
 
 @dataclass
 class PageText:
@@ -125,12 +130,8 @@ class PDFService:
         zoom = OCR_DPI / 72.0
         matrix = pymupdf.Matrix(zoom, zoom)
         for idx, page in enumerate(doc, start=1):
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                raise ValueError(
-                    "Обработка документа заняла слишком много времени. "
-                    "Загрузите документ меньшего объёма или с текстовым слоем."
-                )
+            if time.monotonic() >= deadline:
+                raise ValueError(_TIMEOUT_MSG)
             # Decompression-bomb guard: estimate the rendered size from the page geometry
             # BEFORE get_pixmap allocates the bitmap — checking afterwards does not
             # prevent the allocation it is supposed to guard against.
@@ -143,9 +144,14 @@ class PDFService:
                 )
                 results.append(PageText(page_number=idx, text=""))
                 continue
+            # Rendering (pixmap + PNG encode) is itself slow on adversarial pages, so it
+            # must sit INSIDE the budget: re-check the clock after it, not before.
             pix = page.get_pixmap(matrix=matrix, alpha=False)
             img_bytes = pix.tobytes("png")
             image = Image.open(io.BytesIO(img_bytes))
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise ValueError(_TIMEOUT_MSG)
             try:
                 # Never let one page outlive the whole-document budget.
                 text = pytesseract.image_to_string(
