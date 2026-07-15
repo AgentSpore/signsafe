@@ -55,20 +55,28 @@ class SyncService:
         return token
 
     async def consume_magic_token(self, token: str) -> str | None:
+        # The TTL is enforced IN THE LOOKUP. It previously was not: created_at was
+        # selected and then ignored, so an expired token still authenticated, and the
+        # sweep below only ever removed OTHER rows (and ran after the fact).
+        expiry_window = f"+{TOKEN_TTL_SEC} seconds"
         async with get_db() as db:
             cursor = await db.execute(
-                "SELECT email, created_at, consumed FROM magic_tokens WHERE token = ?",
-                (token,),
+                """SELECT email FROM magic_tokens
+                   WHERE token = ?
+                     AND consumed = 0
+                     AND datetime(created_at, ?) >= datetime('now')""",
+                (token, expiry_window),
             )
             row = await cursor.fetchone()
-            if not row or row["consumed"]:
+            if not row:
                 return None
-            # Token TTL check via SQLite
             await db.execute(
                 "UPDATE magic_tokens SET consumed = 1 WHERE token = ?", (token,)
             )
+            # Opportunistic sweep of tokens that are past the window.
             await db.execute(
-                "DELETE FROM magic_tokens WHERE datetime(created_at, '+15 minutes') < datetime('now')"
+                "DELETE FROM magic_tokens WHERE datetime(created_at, ?) < datetime('now')",
+                (expiry_window,),
             )
             await db.commit()
             return row["email"]
