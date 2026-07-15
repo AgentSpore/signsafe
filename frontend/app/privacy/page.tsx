@@ -15,9 +15,10 @@ import { CONSENT_VERSION } from "@/lib/api";
 export default function PrivacyPage() {
   const { t } = useLocale();
 
-  // Only §5 (what we store) carries a caveat today; the shape is per-section so a future
-  // one can add its own without a second rendering path.
-  const CAVEATS: Record<number, boolean> = { 5: true };
+  // §4 (third-party egress) and §5 (what we store) each carry a caveat — the part of the
+  // truth a reader would otherwise have to infer. Per-section so a future one can add its
+  // own without a second rendering path.
+  const CAVEATS: Record<number, boolean> = { 4: true, 5: true };
   const sections = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({
     title: t(`privacy.s${n}.title`),
     body: t(`privacy.s${n}.body`),

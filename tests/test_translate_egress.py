@@ -6,13 +6,14 @@ responsible for making sure nothing with PII reaches Google.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from signsafe.services.translate_service import TranslateService
 
-FRONTEND_TRANSLATE = (
-    Path(__file__).resolve().parents[1] / "frontend" / "lib" / "translate.ts"
-)
+_FRONTEND = Path(__file__).resolve().parents[1] / "frontend"
+FRONTEND_TRANSLATE = _FRONTEND / "lib" / "translate.ts"
+FRONTEND_ANALYSIS_VIEW = _FRONTEND / "components" / "analysis-view.tsx"
 
 _PII_LINE = "Наймодатель: Иванов Иван Иванович, тел. +7 (916) 123-45-67, ivanov@example.ru"
 
@@ -65,13 +66,37 @@ async def test_redaction_happens_before_the_cache() -> None:
 
 # --- The caller must not even ask for document content -----------------------
 
-def test_frontend_does_not_send_raw_document_or_quotes_for_translation() -> None:
-    src = FRONTEND_TRANSLATE.read_text(encoding="utf-8")
-    body = src.split("const strings: string[] = [];")[1].split("await apiTranslate")[0]
-    # The raw document and verbatim contract quotes must never be pushed for translation.
-    assert "push(p.text" not in body, "raw extracted page text queued for translation"
-    assert "extracted_pages" not in body, "extracted_pages queued for translation"
-    assert "original_text" not in body, "verbatim contract quote queued for translation"
-    # Model-derived analysis prose is still translated.
-    assert "data.summary" in body
-    assert "c.why_risky" in body
+
+def _strip_comments(ts: str) -> str:
+    """Drop TS comments so prose *about* a deleted symbol cannot satisfy a grep for it."""
+    ts = re.sub(r"/\*.*?\*/", "", ts, flags=re.DOTALL)
+    return re.sub(r"^\s*//.*$", "", ts, flags=re.MULTILINE)
+
+
+def test_frontend_translates_only_its_own_ui_strings() -> None:
+    """The beta sends Google nothing derived from the user's document.
+
+    This replaces an earlier guard that let ``translateAnalysis`` exist and merely checked
+    it queued no raw quotes — it still shipped model-derived prose to Google whenever a
+    user picked a non-RU locale. Result translation is now removed outright, so the
+    assertion is the stronger one: the path does not exist.
+    """
+    code = _strip_comments(FRONTEND_TRANSLATE.read_text(encoding="utf-8"))
+
+    assert "translateAnalysis" not in code, "analysis-translation path is back"
+
+    # The egress helper stays module-private and has exactly one call site (its definition
+    # plus that call), fed the static UI dictionary — never anything user-supplied.
+    assert "export async function apiTranslate" not in code, "egress helper was exported"
+    assert code.count("apiTranslate(") == 2, "apiTranslate gained a second call site"
+    assert "apiTranslate(values" in code, "apiTranslate no longer fed the UI dictionary"
+
+    # Nothing document-shaped may appear in the egress module at all.
+    for doc_field in ("extracted_pages", "original_text", "risk_clauses", "summary"):
+        assert doc_field not in code, f"document field {doc_field!r} reachable from egress"
+
+
+def test_result_view_does_not_import_the_translation_module() -> None:
+    """The RU-only result view must not re-acquire a translation path."""
+    view = _strip_comments(FRONTEND_ANALYSIS_VIEW.read_text(encoding="utf-8"))
+    assert "lib/translate" not in view, "result view imports the translation module again"

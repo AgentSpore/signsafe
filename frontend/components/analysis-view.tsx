@@ -14,13 +14,17 @@ import { ShareButton } from "./share-button";
 import { NegotiationPanel } from "./negotiation-panel";
 import { ExportButton } from "./export-button";
 import { PDFPreview } from "./pdf-preview";
-import { TranslatedSource } from "./translated-source";
-import { LocaleSwitcher } from "./locale-switcher";
 import { useLocale } from "./locale-provider";
 import { SiteFooter } from "./site-footer";
-import { translateAnalysis } from "@/lib/translate";
-import { useEffect, useState as useStateInner } from "react";
 
+/**
+ * The result view is RU-only for the beta.
+ *
+ * It previously translated the analysis into the selected locale via `translateAnalysis`,
+ * which egressed model-derived prose to Google Translate. That path is deleted (see
+ * lib/translate.ts): the analysis is rendered exactly as the backend returned it, so the
+ * only third party that ever sees anything derived from the document is OpenRouter.
+ */
 export function AnalysisView({
   data,
   readOnly = false,
@@ -32,60 +36,16 @@ export function AnalysisView({
 }) {
   const [jumpPage, setJumpPage] = useState<number | null>(null);
   const [showPreview, setShowPreview] = useState(false);
-  const { locale, t } = useLocale();
-  const [displayData, setDisplayData] = useStateInner<AnalysisData>(data);
-  const [translating, setTranslating] = useStateInner(false);
-
-  useEffect(() => {
-    if (locale === "ru") {
-      // RU is the source locale (UI_EN holds RU strings) — translating it to itself
-      // would burn an API call and round-trip the text through a translator.
-      setDisplayData(data);
-      return;
-    }
-    setTranslating(true);
-    translateAnalysis(data as AnalysisData & { id?: string }, locale)
-      .then((translated) => {
-        setDisplayData(translated);
-      })
-      .catch((err) => {
-        console.error("Translation failed, falling back to EN", err);
-        setDisplayData(data);
-      })
-      .finally(() => setTranslating(false));
-  }, [locale, data]);
-
-  const forceRetranslate = async () => {
-    if (locale === "ru") return;
-    setTranslating(true);
-    try {
-      // Clear cached translation for this doc
-      const docId = (data as { id?: string }).id;
-      if (docId && typeof window !== "undefined") {
-        Object.keys(localStorage)
-          .filter((k) => k.startsWith(`signsafe:doc:${docId}:`) && k !== `signsafe:doc:${docId}`)
-          .forEach((k) => localStorage.removeItem(k));
-      }
-      const fresh = await (await import("@/lib/translate")).translateAnalysis(
-        data as AnalysisData & { id?: string },
-        locale,
-      );
-      setDisplayData(fresh);
-    } catch (e) {
-      console.error("Force retranslate failed", e);
-    } finally {
-      setTranslating(false);
-    }
-  };
+  const { t } = useLocale();
 
   // Severity-desc, abstained clauses last: they carry no verdict, so they rank below an
   // INFO finding instead of jumping to the top via a null→0 coercion.
   const rank = (c: RiskClause) => (isAbstained(c) ? -1 : (c.severity as number));
-  const sorted = displayData.risk_clauses.slice().sort((a, b) => rank(b) - rank(a));
+  const sorted = data.risk_clauses.slice().sort((a, b) => rank(b) - rank(a));
   // Pre-signing checklist — tenant-profile clauses classified void / disputable, void first.
   const isTenantMode = data.industry === "residential_lease";
   const legalityRank: Record<string, number> = { void: 0, disputable: 1 };
-  const checklist = displayData.risk_clauses
+  const checklist = data.risk_clauses
     .filter((c) => c.legality === "void" || c.legality === "disputable")
     .sort((a, b) => (legalityRank[a.legality!] ?? 9) - (legalityRank[b.legality!] ?? 9));
 
@@ -125,9 +85,9 @@ export function AnalysisView({
             <PDFPreview pdfBytes={pdfBytes} targetPage={jumpPage} />
           </div>
         )}
-        {locale !== "ru" && displayData.extracted_pages && displayData.extracted_pages.length > 0 && (
-          <TranslatedSource pages={displayData.extracted_pages} />
-        )}
+        {/* A "ТЕКСТ ДОКУМЕНТА (ПЕРЕВЕДЁН)" panel used to render here for non-RU locales.
+            With result translation removed it could only ever show the untranslated
+            source under a "переведён" heading, so it is gone with the rest of the path. */}
         <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
           <section className="lg:col-span-6 space-y-6">
             <div className="border border-[var(--color-divider)] bg-[var(--color-bg-surface)] p-8">
@@ -135,10 +95,10 @@ export function AnalysisView({
                 {t("analysis.underReview")} · {t("beta.badge")}
               </div>
               <h1 className="font-display text-3xl md:text-5xl leading-tight break-words">
-                {displayData.filename}
+                {data.filename}
               </h1>
               <div className="mt-4 font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-secondary)]">
-                {data.num_pages} {t("analysis.pages")} · {displayData.risk_clauses.length}{" "}
+                {data.num_pages} {t("analysis.pages")} · {data.risk_clauses.length}{" "}
                 {t("analysis.clausesFlagged")}
                 {data.industry && ` · ${t(`industry.${data.industry}`)}`}
                 {data.used_ocr && ` · ${t("pdf.ocrUsed")}`}
@@ -151,26 +111,25 @@ export function AnalysisView({
 
             {data.ocr_quality_low && <OcrQualityBanner />}
 
-            {displayData.summary && (
+            {data.summary && (
               <div className="border border-[var(--color-divider)] bg-[var(--color-bg-surface)] p-8">
                 <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-3">
                   ─── {t("analysis.summary")} ───
-                  {translating && <span className="ml-2 text-[var(--color-accent-electric)]">· {t("analysis.translating")}</span>}
                 </div>
                 <p className="font-body text-lg leading-relaxed whitespace-pre-wrap text-[var(--color-ink-primary)]">
-                  {displayData.summary}
+                  {data.summary}
                 </p>
               </div>
             )}
 
-            {displayData.top_3_concerns.length > 0 && (
+            {data.top_3_concerns.length > 0 && (
               <div className="border border-[var(--color-divider)] bg-[var(--color-bg-surface)] p-8">
                 <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-3">
                   ─── {t("analysis.top3")} ───
                 </div>
                 <p className="sr-only">{/* locale-aware */}</p>
                 <ol className="space-y-3 font-body">
-                  {displayData.top_3_concerns.map((concern, i) => (
+                  {data.top_3_concerns.map((concern, i) => (
                     <li key={i} className="flex gap-4">
                       <span className="font-display text-3xl text-[var(--color-accent-electric)] leading-none">
                         {String(i + 1).padStart(2, "0")}
@@ -261,21 +220,15 @@ export function AnalysisView({
 
           <aside className="lg:col-span-4">
             <div className="lg:sticky lg:top-8 space-y-6">
-              <div className="flex justify-end gap-2 items-center">
-                {locale !== "ru" && (
-                  <button
-                    type="button"
-                    onClick={forceRetranslate}
-                    disabled={translating}
-                    title="Force re-translate (clears cache)"
-                    className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)] hover:text-[var(--color-accent-signal)] border border-[var(--color-divider)] px-3 py-1.5 disabled:opacity-50"
-                  >
-                    {translating ? "..." : t("analysis.retry")}
-                  </button>
-                )}
-                <LocaleSwitcher />
+              {/* No locale switcher here: offering EN/DE/… would promise a translated
+                  разбор we deliberately no longer produce. A plain note is the honest
+                  version of the same information. */}
+              <div className="border border-[var(--color-divider)] bg-[var(--color-bg-surface)] px-4 py-3">
+                <p className="font-mono text-[10px] tracking-wider uppercase text-[var(--color-ink-tertiary)] leading-relaxed">
+                  {t("analysis.ruOnly")}
+                </p>
               </div>
-              <SeverityPanel data={displayData} />
+              <SeverityPanel data={data} />
               <RedactionPanel categories={data.redacted_categories} />
 
               <div className="border border-[var(--color-divider)] bg-[var(--color-bg-surface)] p-6">
@@ -283,7 +236,7 @@ export function AnalysisView({
                   {t("analysis.breakdown")}
                 </div>
                 {[5, 4, 3, 2, 1].map((lvl) => {
-                  const count = displayData.risk_clauses.filter((c) => c.severity === lvl).length;
+                  const count = data.risk_clauses.filter((c) => c.severity === lvl).length;
                   const labels: Record<number, string> = {
                     5: t("scale.dealBreaker"),
                     4: t("scale.critical"),
@@ -312,8 +265,8 @@ export function AnalysisView({
                 })}
               </div>
 
-              {!readOnly && <NegotiationPanel clauses={displayData.risk_clauses} isMedBill={data.industry === "medical_bill"} />}
-              <ExportButton data={displayData} />
+              {!readOnly && <NegotiationPanel clauses={data.risk_clauses} isMedBill={data.industry === "medical_bill"} />}
+              <ExportButton data={data} />
               {!readOnly && <ShareButton data={data} />}
 
               <Link
