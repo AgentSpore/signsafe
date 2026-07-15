@@ -95,7 +95,7 @@ class AnalysisService:
             f"{wrap_untrusted(redaction.text[:60000])}"
         )
         logger.info("Running forensics agent on {} pages ({})", extracted.num_pages, label)
-        last_exc: Exception | None = None
+        last_exc_type: str | None = None
         for model_name in settings.fallback_models:
             try:
                 run = await lease_agent.run(prompt, model=make_model(model_name))
@@ -112,6 +112,11 @@ class AnalysisService:
                 )
             except Exception as exc:
                 logger.warning("Model {} failed: {}", model_name, type(exc).__name__)
-                last_exc = exc
+                last_exc_type = type(exc).__name__
                 continue
-        raise RuntimeError(f"All free models failed: {last_exc}")
+        # TYPE only, never the value. A provider exception embeds the request body — i.e.
+        # the contract text — in its message; interpolating it here would carry document
+        # content into whatever logs or error reporting consume this RuntimeError.
+        # Deliberately NOT `raise ... from exc`: the __cause__ chain would re-attach the
+        # provider message to any handler that formats the traceback.
+        raise RuntimeError(f"All free models failed: {last_exc_type or 'no models tried'}")

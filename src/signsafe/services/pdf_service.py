@@ -10,6 +10,7 @@ import pymupdf
 from loguru import logger
 
 from signsafe.core.config import settings
+from signsafe.core.errors import UserMessageError
 
 try:
     # Optional OCR stack — guarded so the app runs without the tesseract binding present.
@@ -69,14 +70,14 @@ class PDFService:
         try:
             doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
         except Exception as exc:
-            logger.error("Failed to open PDF: {}", exc)
-            raise ValueError("Не удалось открыть PDF-файл — возможно, он повреждён.") from exc
+            logger.error("Failed to open PDF: {}", type(exc).__name__)
+            raise UserMessageError("Не удалось открыть PDF-файл — возможно, он повреждён.") from exc
 
         # Page-count limit (resource control): reject oversized documents up front.
         if doc.page_count > settings.max_pdf_pages:
             page_count = doc.page_count
             doc.close()
-            raise ValueError(
+            raise UserMessageError(
                 f"В документе {page_count} страниц — превышен лимит "
                 f"{settings.max_pdf_pages}. Загрузите документ меньшего объёма."
             )
@@ -97,13 +98,13 @@ class PDFService:
             logger.info("Low text yield ({}), triggering OCR fallback", total_chars)
             if not _HAS_OCR:
                 doc.close()
-                raise ValueError(
+                raise UserMessageError(
                     "Похоже, это скан без текстового слоя, а модуль распознавания "
                     "(OCR) недоступен. Загрузите PDF с текстовым слоем."
                 )
             try:
                 pages = self._ocr_pages(doc, deadline)
-            except ValueError:
+            except UserMessageError:
                 doc.close()
                 raise
             used_ocr = True
@@ -131,7 +132,7 @@ class PDFService:
         matrix = pymupdf.Matrix(zoom, zoom)
         for idx, page in enumerate(doc, start=1):
             if time.monotonic() >= deadline:
-                raise ValueError(_TIMEOUT_MSG)
+                raise UserMessageError(_TIMEOUT_MSG)
             # Decompression-bomb guard: estimate the rendered size from the page geometry
             # BEFORE get_pixmap allocates the bitmap — checking afterwards does not
             # prevent the allocation it is supposed to guard against.
@@ -160,7 +161,7 @@ class PDFService:
             image = Image.open(io.BytesIO(img_bytes))
             remaining = deadline - time.monotonic()
             if remaining <= 0:
-                raise ValueError(_TIMEOUT_MSG)
+                raise UserMessageError(_TIMEOUT_MSG)
             try:
                 # Never let one page outlive the whole-document budget.
                 text = pytesseract.image_to_string(

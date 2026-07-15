@@ -11,12 +11,38 @@ from sse_starlette.sse import EventSourceResponse
 
 from signsafe.core.config import settings
 from signsafe.core.deps import get_analysis_service, get_pdf_service
+from signsafe.core.errors import UserMessageError
 from signsafe.core.rate_limit import limiter
 from signsafe.schemas.document import AnalysisResult
 from signsafe.services.analysis_service import AnalysisService
 from signsafe.services.pdf_service import PDFService
 
 router = APIRouter(tags=["analyze"])
+
+
+class _UploadBuffer:
+    """Holds the uploaded PDF and releases it the moment extraction is done.
+
+    The SSE generator is a closure that outlives extraction: a plain `pdf_bytes` local
+    stays referenced for the whole analysis (an LLM round-trip of many seconds), so the
+    privacy copy's «освобождается сразу после извлечения текста» would be false. Handing
+    the bytes over through this buffer drops our reference at `take()`, leaving only the
+    caller's short-lived argument.
+    """
+
+    def __init__(self, data: bytes) -> None:
+        self._data: bytes | None = data
+
+    def take(self) -> bytes:
+        if self._data is None:
+            raise RuntimeError("upload buffer already released")
+        data = self._data
+        self._data = None  # release: this object no longer references the PDF
+        return data
+
+    @property
+    def released(self) -> bool:
+        return self._data is None
 
 
 @router.post("/analyze")
@@ -66,7 +92,7 @@ async def analyze(
     try:
         pdf_bytes = await file.read()
     except Exception as exc:
-        logger.error("Failed to read upload: {}", exc)
+        logger.error("Failed to read upload: {}", type(exc).__name__)
         raise HTTPException(
             status_code=400,
             detail={"code": "read_failed", "message": "Не удалось прочитать файл."},
@@ -88,13 +114,22 @@ async def analyze(
         )
 
     filename = file.filename
+    # Hand the bytes to a buffer and drop our own name for them, so the only reference
+    # left is the buffer's — released as soon as extraction has consumed it.
+    buffer = _UploadBuffer(pdf_bytes)
+    del pdf_bytes
 
     async def event_generator():
         try:
             yield json.dumps({"stage": "extracting", "progress": 10, "message": "Reading PDF pages..."})
             # Extraction + OCR are blocking CPU/subprocess work — never run them on the
             # event loop, or one slow scan stalls every other request on this worker.
-            extracted = await asyncio.to_thread(pdf_service.extract, pdf_bytes)
+            data = buffer.take()
+            extracted = await asyncio.to_thread(pdf_service.extract, data)
+            # Free the PDF BEFORE the LLM round-trip: `data` is the last reference, and
+            # the analysis below takes seconds. This is what makes «освобождается сразу
+            # после извлечения текста» true rather than aspirational.
+            del data
 
             ocr_suffix = " (OCR used)" if extracted.used_ocr else ""
             yield json.dumps({
@@ -133,10 +168,17 @@ async def analyze(
                     **outcome.result.model_dump(),
                 },
             })
-        except ValueError as exc:
+        except UserMessageError as exc:
+            # The ONLY exception whose message we may echo: we authored it (a fixed RU
+            # string). Note this is deliberately NOT `except ValueError` — pydantic's
+            # ValidationError is a ValueError and its message embeds the offending input,
+            # which here is model output derived from the contract.
             yield json.dumps({"stage": "error", "progress": 0, "message": str(exc)})
         except Exception as exc:
-            logger.error("Analysis failed: {}", exc)
+            # TYPE only. Provider exceptions carry the request body — i.e. the contract
+            # text — in their message; logging the value would write document content into
+            # logs that persist.
+            logger.error("Analysis failed: {}", type(exc).__name__)
             yield json.dumps({
                 "stage": "error",
                 "progress": 0,
