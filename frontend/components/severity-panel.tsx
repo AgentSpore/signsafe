@@ -69,7 +69,7 @@ export function ReliabilityBanner() {
   );
 }
 
-/** What the local redactor masked before the text left for OpenRouter (152-ФЗ). */
+/** What the local redactor masked before the text left for the AI provider (152-ФЗ). */
 export function RedactionPanel({ categories }: { categories: string[] | undefined }) {
   const { t } = useLocale();
   if (!categories) return null;

@@ -8,19 +8,28 @@ way to hand user content to a third party.
 ================================ EGRESS INVENTORY ================================
 Third-party destinations that receive DOCUMENT-DERIVED content:
 
-1. OpenRouter — document forensics.
-   services/analysis_service.py -> agents.lease_agent -> https://openrouter.ai/api/v1
+1. z.ai / Zhipu AI (api.z.ai) — document forensics.
+   services/analysis_service.py -> agents.lease_agent -> https://api.z.ai/api/paas/v4
    Carries: the extracted contract text, best-effort redacted (redact_for_egress) and
    wrapped as untrusted data. Disclosed in the consent/privacy copy.
 
-2. OpenRouter — negotiation drafting.
+2. z.ai / Zhipu AI (api.z.ai) — negotiation drafting.
    services/negotiation_service.py -> agents.negotiation_agent -> same host.
    Carries: CLIENT-SUPPLIED clause fields (the client may post anything — /api/analyze
    hands extracted_pages[].text back unredacted). Re-redacted server-side + wrapped.
 
-OpenRouter is the ONLY destination that receives anything derived from the document.
-There is no other third-party host in the tree. The privacy copy says exactly this, so
-adding one REQUIRES updating this inventory and the user-facing copy together.
+z.ai is the ONLY destination that receives anything derived from the document. There is
+no other third-party host in the tree. The privacy copy says exactly this, so adding one
+REQUIRES updating this inventory and the user-facing copy together.
+
+The endpoint is env-configurable (LLM_BASE_URL) but NOT free-form: core/config.py pins it
+to ALLOWED_LLM_HOSTS — which this module re-exports below — so an operator cannot point
+document text at a provider the copy does not name without a source change.
+
+PREVIOUSLY: OpenRouter. It was replaced, not supplemented — openrouter.ai answers HTTP 403
+"Access denied by security policy" to our hosts' ASNs (a deliberate geo-block), so it is
+permanently unusable from this deployment. Routing around that block via a proxy is
+forbidden by OpenRouter's own ToS §5.7; the provider was swapped instead.
 
 Everything else (verified, keep it that way):
 
@@ -35,7 +44,7 @@ Everything else (verified, keep it that way):
    for the stylesheet/webfonts. It carries NO document content and does not touch our
    server; what Google sees is the visitor's IP and user-agent, as with any CDN asset.
    Listed so the inventory is not quietly incomplete: the privacy copy's claim is
-   specifically that OpenRouter is the only third party receiving anything FROM THE
+   specifically that z.ai is the only third party receiving anything FROM THE
    DOCUMENT, which remains true. Self-hosting the fonts (the files already exist under
    frontend/public/fonts for the PDF export) would remove even this — not done yet.
 
@@ -86,6 +95,7 @@ from __future__ import annotations
 
 import re
 
+from signsafe.core.config import ALLOWED_LLM_HOSTS
 from signsafe.services.redaction import redact
 
 # Untrusted-data delimiters. Any third-party prompt payload built from user/client input
@@ -103,12 +113,15 @@ _MARKER_REPLACEMENT = "[МАРКЕР]"
 
 # Modules allowed to talk to a third party, which MUST use this chokepoint.
 EGRESS_REGISTRY: dict[str, str] = {
-    "signsafe/services/analysis_service.py": "OpenRouter (forensics)",
-    "signsafe/services/negotiation_service.py": "OpenRouter (negotiation)",
+    "signsafe/services/analysis_service.py": "z.ai (forensics)",
+    "signsafe/services/negotiation_service.py": "z.ai (negotiation)",
 }
 
-# The ONLY third-party host this codebase may reach with user content.
-KNOWN_THIRD_PARTY_HOSTS: frozenset[str] = frozenset({"openrouter.ai"})
+# The ONLY third-party host this codebase may reach with user content. Sourced from
+# core/config.ALLOWED_LLM_HOSTS, which is a hardcoded constant — NOT read from env — so
+# this stays a real tripwire: an operator cannot widen it, only a source change can, and
+# that change must update the privacy copy too.
+KNOWN_THIRD_PARTY_HOSTS: frozenset[str] = ALLOWED_LLM_HOSTS
 
 
 def neutralize_markers(text: str) -> str:

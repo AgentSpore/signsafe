@@ -13,6 +13,10 @@ dependencies = [
     "pymupdf>=1.24.0",
     "sse-starlette>=2.1.0",
     "httpx>=0.27.0",
+    # Direct import in services/agents.py (AsyncOpenAI — the client whose built-in retry
+    # is the single retry layer). pydantic-ai pulls it in via its openai extra, but the
+    # import is ours, so the dependency is declared rather than inherited.
+    "openai>=1.0.0",
     "pytesseract>=0.3.13",
     "pillow>=10.4.0",
     "slowapi>=0.1.9",

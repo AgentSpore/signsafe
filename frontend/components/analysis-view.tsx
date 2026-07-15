@@ -25,7 +25,7 @@ import { SiteFooter } from "./site-footer";
  * public /api/translate endpoint — has been removed (see
  * src/signsafe/services/outbound.py). The analysis is rendered exactly as the backend
  * returned it, so the only third party that ever sees anything derived from the document
- * is OpenRouter.
+ * is the AI provider (z.ai).
  */
 export function AnalysisView({
   data,

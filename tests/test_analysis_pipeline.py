@@ -3,8 +3,11 @@ pre-check, and norm_ref provenance. None of these may call the LLM."""
 
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 
+from signsafe.core.config import settings
 from signsafe.schemas.clause import RiskClause
 from signsafe.schemas.document import AnalysisResult
 from signsafe.schemas.industry import DEPRECATED_INDUSTRIES, Industry, is_deprecated_industry
@@ -14,6 +17,7 @@ from signsafe.services.analysis_service import (
     _drop_risk_score,
     _strip_llm_norm_refs,
 )
+from signsafe.services.agents import lease_agent
 from signsafe.services.contract_precheck import looks_like_contract
 from signsafe.services.pdf_service import ExtractedDocument, PageText
 
@@ -124,3 +128,31 @@ def test_llm_supplied_norm_refs_are_stripped() -> None:
     assert clause.norm_ref is None
     assert clause.legality is None
     assert clause.legality_gloss is None
+
+
+@pytest.mark.asyncio
+async def test_a_stalled_llm_is_cut_off_by_the_total_budget(monkeypatch) -> None:
+    """A STALLED upstream — the case the retry tests cannot cover, because they all fail
+    fast (429/503/dead socket). Here the provider simply never answers.
+
+    Without a total budget nothing bounds this: the per-request timeout is multiplied by
+    retries, and the frontend's AbortSignal only disconnects the client — the worker keeps
+    grinding. The budget must cut it, and the failure must still be TYPE-only (no document
+    text, no provider message).
+    """
+    stalled = asyncio.Event()
+
+    async def never_answers(*args, **kwargs):
+        await stalled.wait()  # blocks until the budget expires
+
+    monkeypatch.setattr(settings, "llm_total_seconds", 0.05)
+    monkeypatch.setattr(lease_agent, "run", never_answers)
+
+    with pytest.raises(RuntimeError) as excinfo:
+        await AnalysisService().analyze(_extracted(_CONTRACT_TEXT))
+
+    assert "TimeoutError" in str(excinfo.value), (
+        f"budget must surface as a timeout, got: {excinfo.value}"
+    )
+    # The RuntimeError carries an exception TYPE name and nothing else.
+    assert _CONTRACT_TEXT[:40] not in str(excinfo.value)

@@ -3,7 +3,9 @@
 `/api/translate` was a public endpoint that forwarded arbitrary caller strings to Google
 Translate. Deleting the frontend caller did not close it — any client could POST raw
 contract text to our own endpoint and reach Google, which made the privacy claim
-"OpenRouter is the only third party that receives anything from your document" false.
+"the AI provider is the only third party that receives anything from your document" false.
+(That provider was OpenRouter when this guard was written; it is z.ai now. The claim's
+shape — exactly ONE third-party recipient — is what these tests defend.)
 
 The capability was removed rather than gated. These tests fail if it comes back, because
 its return would silently invalidate shipped user-facing privacy copy.
@@ -73,7 +75,7 @@ def test_no_google_translate_host_anywhere_in_backend() -> None:
 
 
 def test_inventory_no_longer_lists_google_as_a_live_egress() -> None:
-    assert KNOWN_THIRD_PARTY_HOSTS == {"openrouter.ai"}
+    assert KNOWN_THIRD_PARTY_HOSTS == {"api.z.ai"}
     assert not any("translate" in mod for mod in EGRESS_REGISTRY)
     assert not any("Google" in dest for dest in EGRESS_REGISTRY.values())
 

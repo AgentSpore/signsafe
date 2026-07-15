@@ -9,7 +9,7 @@ import { UI_EN } from "@/lib/i18n";
  * There is deliberately no locale switching and no translation round-trip: the previous
  * implementation shipped UI strings to Google Translate via our own public
  * `/api/translate` endpoint, which also accepted arbitrary caller text. That endpoint was
- * removed so OpenRouter is the ONLY third party receiving anything (see
+ * removed so the AI provider (z.ai) is the ONLY third party receiving anything (see
  * src/signsafe/services/outbound.py). `UI_EN` is already the RU source dictionary, so it
  * is rendered directly.
  *

@@ -1,7 +1,16 @@
 import { NextRequest } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8894";
-const FETCH_TIMEOUT_MS = 180_000;
+// Outer envelope, NOT the real bound — the backend owns that (a client hanging up does not
+// stop server work). Sized to sit just above the backend's own ceiling so this proxy never
+// aborts first: an AbortSignal here surfaces an opaque 504 and hides whatever the backend
+// was actually about to say.
+//
+//   core/config.py: max_extraction_seconds (120) + llm_total_seconds (120) = 240s ceiling
+//   250s > 240s, and maxDuration (300) > 250s.
+//
+// These numbers are deliberately related. Change one, change the others.
+const FETCH_TIMEOUT_MS = 250_000;
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;

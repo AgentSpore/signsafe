@@ -21,18 +21,27 @@ AI-помощник, который читает мелкий шрифт за в
 **Итого: 126 паттернов подводных камней** в `src/signsafe/knowledge/predatory_patterns.json`
 
 ## Стек
-- Backend: FastAPI + pydantic-ai (бесплатные LLM через OpenRouter) + PyMuPDF + Tesseract OCR
+- Backend: FastAPI + pydantic-ai (бесплатная LLM через z.ai) + PyMuPDF + Tesseract OCR
 - Frontend: Next.js 16 + React 19 + Tailwind v4 + TypeScript, PWA
 - Приватность: stateless. PDF анализируется в памяти и удаляется. Результаты только в браузере.
-- i18n: RU (основной) + EN / ZH / ES / DE / FR через Google Translate API
+- Язык: только RU. Перевода нет — путь через Google Translate удалён вместе с публичным
+  эндпоинтом `/api/translate` (см. `tests/test_translate_removed.py`), поэтому ни текст
+  договора, ни результат разбора не попадают в переводческие сервисы.
 - Опционально: E2E зашифрованная облачная синхронизация (AES-GCM)
 
 ## Запуск
 ```bash
 make install
-OPENROUTER_API_KEY=... make dev
+ZAI_API_KEY=... make dev
 ```
 Backend: `:8894` · Frontend: `:3004`
+
+LLM настраивается через окружение: `ZAI_API_KEY` (или `LLM_API_KEY`), `LLM_MODEL`,
+`LLM_FALLBACK_MODELS` (через запятую), `LLM_BASE_URL`. `LLM_BASE_URL` принимает только
+хост из `ALLOWED_LLM_HOSTS` (`src/signsafe/core/config.py`): текст договора уходит лишь
+тому провайдеру, который назван в политике конфиденциальности. По умолчанию используется
+одна модель — `glm-4.5-flash` (единственная стабильно бесплатная на этом аккаунте);
+устойчивость обеспечивает retry с backoff на 429, а не каскад из платных моделей.
 
 ## Правовая база
 

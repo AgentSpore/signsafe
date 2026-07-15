@@ -173,7 +173,7 @@ export const DEMO_ANALYSIS: AnalysisData = {
   industry: "residential_lease",
   used_ocr: false,
   ocr_quality_low: false,
-  // What the local redactor masked before the text went to OpenRouter.
+  // What the local redactor masked before the text went to the AI provider.
   redacted_categories: ["Паспортные данные", "Телефон", "ФИО", "Адрес"],
   extracted_pages: [
     {

@@ -7,8 +7,13 @@ SCOPE — these are source-text tripwires, not a sandbox. They catch FORGETTING 
 literal, an egress module that stops calling the chokepoint), not a deliberate bypass
 (runtime-assembled hostname, config-supplied host, text routed around the helper). See
 the "WHAT THE GUARD TESTS DO AND DO NOT GUARANTEE" section of services/outbound.py. The
-one runtime (non-source-text) assertion is test_openrouter_is_the_only_configured_host,
-which reads the provider actually wired into the agents.
+one runtime (non-source-text) assertion is test_zai_is_the_only_configured_host, which
+reads the provider actually wired into the agents.
+
+The endpoint is env-configurable (LLM_BASE_URL), which would normally fall squarely in the
+DO-NOT-CATCH list ("a hostname read from config/env"). It does not, because core/config.py
+validates the resolved host against the hardcoded ALLOWED_LLM_HOSTS — the two tests below
+pin that constant and prove the validator actually rejects an undisclosed host.
 """
 
 from __future__ import annotations
@@ -18,7 +23,9 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
+from pydantic import ValidationError
 
+from signsafe.core.config import ALLOWED_LLM_HOSTS, DEFAULT_LLM_BASE_URL, Settings
 from signsafe.services.agents import lease_agent, negotiation_agent, provider
 from signsafe.services.outbound import (
     EGRESS_REGISTRY,
@@ -68,7 +75,7 @@ def test_every_registered_egress_module_exists() -> None:
         assert (SRC / rel).is_file(), f"registered egress module missing: {rel}"
 
 
-def test_openrouter_is_the_only_configured_host() -> None:
+def test_zai_is_the_only_configured_host() -> None:
     """RUNTIME check (not source text): the base_url actually wired into the agents.
 
     This is the one assertion that survives a renamed constant or a moved literal — it
@@ -76,12 +83,45 @@ def test_openrouter_is_the_only_configured_host() -> None:
     """
     host = urlparse(str(provider.base_url)).hostname
     assert host in KNOWN_THIRD_PARTY_HOSTS, f"agents are wired to an unknown host: {host}"
-    assert KNOWN_THIRD_PARTY_HOSTS == {"openrouter.ai"}, (
-        "The privacy copy states OpenRouter is the ONLY third party receiving anything "
+    assert KNOWN_THIRD_PARTY_HOSTS == {"api.z.ai"}, (
+        "The privacy copy states z.ai is the ONLY third party receiving anything "
         "document-derived. Adding a host here REQUIRES updating the user-facing copy."
     )
     # Both agents exist and share that single provider.
     assert lease_agent is not None and negotiation_agent is not None
+
+
+def test_the_egress_inventory_cannot_be_widened_by_env() -> None:
+    """The host set must stay a hardcoded constant, not an env-derived one.
+
+    `llm_base_url` is env-configurable (LLM_BASE_URL). If KNOWN_THIRD_PARTY_HOSTS were
+    derived from it, the guard above would be self-fulfilling: point the deployment at
+    any host and the "only third party" assertion would happily agree, while the privacy
+    copy silently became false. It is sourced from the hardcoded core.config constant.
+    """
+    assert KNOWN_THIRD_PARTY_HOSTS is ALLOWED_LLM_HOSTS
+    assert ALLOWED_LLM_HOSTS == {"api.z.ai"}
+    assert urlparse(DEFAULT_LLM_BASE_URL).hostname in ALLOWED_LLM_HOSTS
+
+
+def test_llm_base_url_rejects_an_undisclosed_host() -> None:
+    """An operator must not be able to redirect document text via env alone."""
+    with pytest.raises(ValidationError):
+        Settings(llm_base_url="https://evil.example.com/v1")
+    # And the disclosed host is accepted, i.e. the validator is not vacuously strict.
+    assert Settings(llm_base_url=DEFAULT_LLM_BASE_URL).llm_base_url == DEFAULT_LLM_BASE_URL
+
+
+def test_llm_base_url_rejects_cleartext_even_to_the_disclosed_host() -> None:
+    """The sneaky one: the host is ALLOWED, so a hostname-only check waves it through.
+
+    http:// to api.z.ai puts lease-contract text on the wire in cleartext. Disclosing the
+    recipient is not the same promise as protecting the payload in transit, and the whole
+    point of this validator is that env alone must not be able to break either.
+    """
+    for cleartext in ("http://api.z.ai/api/paas/v4", "ftp://api.z.ai/api/paas/v4"):
+        with pytest.raises(ValidationError):
+            Settings(llm_base_url=cleartext)
 
 
 @pytest.mark.parametrize("rel,dest", sorted(EGRESS_REGISTRY.items()))

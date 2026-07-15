@@ -69,7 +69,7 @@ app.include_router(documents.router, prefix="/api")
 app.include_router(negotiation.router, prefix="/api")
 # NOTE: two routers are deliberately absent, both removed rather than gated:
 #   /api/translate — a public endpoint that forwarded arbitrary caller strings to Google
-#     Translate, which made "OpenRouter is the only third party that receives anything
+#     Translate, which made "the AI provider is the only third party that receives anything
 #     from your document" false.
 #   /api/sync/*    — stored an email + magic-link tokens + "encrypted" analyses whose key
 #     was derived from that same stored email, so it was not zero-knowledge, and it had no

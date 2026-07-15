@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass, field
 
 from loguru import logger
@@ -96,9 +97,24 @@ class AnalysisService:
         )
         logger.info("Running forensics agent on {} pages ({})", extracted.num_pages, label)
         last_exc_type: str | None = None
+        # ONE authoritative wall-clock ceiling for the whole cascade, retries included.
+        # A per-request timeout cannot bound this (retries multiply it), and the frontend's
+        # AbortSignal cannot either — a client hanging up does not stop server work, it just
+        # means nobody is left to receive it. Measured as a deadline rather than a per-model
+        # timeout so an operator extending LLM_FALLBACK_MODELS cannot multiply the budget.
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + settings.llm_total_seconds
         for model_name in settings.fallback_models:
+            remaining = deadline - loop.time()
+            if remaining <= 0:
+                logger.warning("LLM budget of {}s exhausted", settings.llm_total_seconds)
+                last_exc_type = last_exc_type or "TimeoutError"
+                break
             try:
-                run = await lease_agent.run(prompt, model=make_model(model_name))
+                run = await asyncio.wait_for(
+                    lease_agent.run(prompt, model=make_model(model_name)),
+                    timeout=remaining,
+                )
                 logger.info("Analysis succeeded with {}", model_name)
                 result = run.output
                 # norm_ref safety: discard any LLM-emitted refs, then apply the allowlist.
@@ -119,4 +135,4 @@ class AnalysisService:
         # content into whatever logs or error reporting consume this RuntimeError.
         # Deliberately NOT `raise ... from exc`: the __cause__ chain would re-attach the
         # provider message to any handler that formats the traceback.
-        raise RuntimeError(f"All free models failed: {last_exc_type or 'no models tried'}")
+        raise RuntimeError(f"All models failed: {last_exc_type or 'no models tried'}")

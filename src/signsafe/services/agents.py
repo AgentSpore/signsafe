@@ -2,23 +2,85 @@
 
 from __future__ import annotations
 
+from httpx import Timeout
+from openai import AsyncOpenAI
 from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.output import PromptedOutput
 from pydantic_ai.providers.openai import OpenAIProvider
+from pydantic_ai.settings import ModelSettings
 
 from signsafe.core.config import settings
 from signsafe.schemas.document import AnalysisResult
 from signsafe.schemas.negotiation import NegotiationEmailResponse
 
-provider = OpenAIProvider(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=settings.openrouter_api_key or "dummy",
-)
+# z.ai's free tier throttles at roughly 3 concurrent requests: past that it answers 429
+# (code 1302) rather than queueing. With a single free model there is nothing to fail over
+# to, so retry-with-backoff IS this deployment's resilience.
+#
+# One try plus three retries. The provider SDK owns that retry, and it is the ONLY layer
+# that may: see _build_openai_client.
+_MAX_RETRIES = 3
+
+# Per-REQUEST cap (not a whole-chain budget), so a stuck upstream cannot pin a worker.
+_TIMEOUT = Timeout(90.0, connect=10.0)
+
+
+def _build_openai_client() -> AsyncOpenAI:
+    """The provider SDK client. Its BUILT-IN retry is the single retry layer.
+
+    EXACTLY ONE layer may own 429/5xx. AsyncOpenAI already retries 408/409/429/5xx, honours
+    Retry-After (when 0 < it <= 60s), and otherwise backs off exponentially (0.5s doubling
+    to an 8s cap, with jitter) — i.e. precisely the policy this service needs, already
+    written and tested upstream. Adding a second retry layer underneath it does not share
+    the budget, it MULTIPLIES: a tenacity transport under the SDK default measured 12 real
+    outbound calls for ONE logical LLM call (3 SDK attempts x 4 transport attempts), each
+    SDK cycle re-paying the full transport backoff. Worst on the very case retry exists for
+    here — 1113 "insufficient balance" is permanent but arrives as HTTP 429.
+
+    Retry also stays in the SDK because the exception TYPE is our only operator signal:
+    analysis_service logs type(exc).__name__ and deliberately nothing else (core/errors.py
+    — an exception VALUE embeds the request body, i.e. contract text). The SDK's own
+    failures are already named for the condition (RateLimitError / InternalServerError /
+    APITimeoutError / AuthenticationError). Anything raised from a custom transport hook
+    below the SDK is destroyed as a signal: AsyncAPIClient.request catches bare `Exception`
+    (before its own httpx.HTTPStatusError branch) and re-raises APIConnectionError, so a
+    throttle would report itself to the operator as a network fault.
+
+    Explicit construction, not OpenAIProvider(base_url=..., api_key=...): that overload
+    builds the client implicitly and gives no way to set max_retries or the timeout.
+
+    (Distinct from Agent(retries=...), which governs pydantic-ai's output-validation and
+    tool-call loop — a separate layer that never sees an HTTP status.)
+    """
+    return AsyncOpenAI(
+        base_url=settings.llm_base_url,
+        api_key=settings.llm_api_key or "dummy",
+        max_retries=_MAX_RETRIES,
+        timeout=_TIMEOUT,
+    )
+
+
+# The endpoint is config-driven (core/config.py), not hardcoded: z.ai by default, and
+# constrained to a disclosed host by Settings' llm_base_url validator. "dummy" keeps the
+# module importable without a key (health checks, tests) — a real call then fails 401.
+provider = OpenAIProvider(openai_client=_build_openai_client())
+
+# GLM models reason by default and emit the trace as latency we do not use: the output is
+# a fixed schema, and PromptedOutput only needs the final JSON. z.ai accepts the OpenAI
+# dialect plus this one non-standard body field, so it rides in extra_body rather than
+# forcing a provider-specific model class. Applied on the model, not per-agent, so every
+# call path (forensics + negotiation, including analysis_service's per-model override)
+# inherits it.
+_MODEL_SETTINGS = ModelSettings(extra_body={"thinking": {"type": "disabled"}})
 
 
 def make_model(model_name: str | None = None) -> OpenAIChatModel:
-    return OpenAIChatModel(model_name or settings.agent_model, provider=provider)
+    return OpenAIChatModel(
+        model_name or settings.agent_model,
+        provider=provider,
+        settings=_MODEL_SETTINGS,
+    )
 
 
 # NOTE: the untrusted-data markers live in services/outbound.py (the egress chokepoint),
