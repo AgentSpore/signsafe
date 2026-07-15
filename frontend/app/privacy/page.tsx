@@ -1,0 +1,76 @@
+"use client";
+
+import Link from "next/link";
+import { useLocale } from "@/components/locale-provider";
+import { LocaleSwitcher } from "@/components/locale-switcher";
+import { SiteFooter } from "@/components/site-footer";
+import { CONSENT_VERSION } from "@/lib/api";
+
+/**
+ * Full privacy policy. Deliberately states the uncomfortable parts — cross-border transfer
+ * to a foreign AI provider, best-effort (not guaranteed) redaction, free models with no
+ * usage guarantees — because the consent it backs is worthless if the page oversells.
+ * No "юрист проверил" / "гарантирует законность" claims anywhere.
+ */
+export default function PrivacyPage() {
+  const { t } = useLocale();
+
+  const sections = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({
+    title: t(`privacy.s${n}.title`),
+    body: t(`privacy.s${n}.body`),
+  }));
+
+  return (
+    <main className="min-h-screen bg-[var(--color-bg-base)] text-[var(--color-ink-primary)]">
+      <div className="fixed inset-0 grid-lines pointer-events-none opacity-40" />
+
+      <header className="relative border-b border-[var(--color-divider)]">
+        <div className="max-w-[1000px] mx-auto px-6 md:px-8 py-6 flex items-center justify-between gap-4">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-8 h-8 border-2 border-[var(--color-ink-primary)] flex items-center justify-center font-mono text-xs font-bold">
+              §
+            </div>
+            <span className="font-mono text-sm tracking-widest uppercase">SignSafe</span>
+          </Link>
+          <LocaleSwitcher />
+        </div>
+      </header>
+
+      <article className="relative max-w-[1000px] mx-auto px-6 md:px-8 py-16 md:py-24">
+        <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-4">
+          {t("privacy.updated")} {CONSENT_VERSION} · {t("beta.badge")}
+        </div>
+
+        <h1 className="font-display text-4xl md:text-6xl leading-[0.95] mb-8">
+          {t("privacy.title")}
+        </h1>
+
+        <p className="font-body text-lg md:text-xl leading-relaxed text-[var(--color-ink-secondary)] max-w-3xl mb-16">
+          {t("privacy.intro")}
+        </p>
+
+        <div className="space-y-12">
+          {sections.map((s) => (
+            <section key={s.title} className="border-t border-[var(--color-divider)] pt-8">
+              <h2 className="font-display text-2xl md:text-3xl mb-4 leading-tight">{s.title}</h2>
+              <p className="font-body text-base leading-relaxed text-[var(--color-ink-secondary)] max-w-3xl">
+                {s.body}
+              </p>
+            </section>
+          ))}
+        </div>
+
+        <div className="mt-16 pt-8 border-t border-[var(--color-divider)]">
+          <Link
+            href="/"
+            className="inline-block font-mono text-xs tracking-widest uppercase border border-[var(--color-divider)] px-6 py-4 text-[var(--color-ink-secondary)] hover:bg-[var(--color-bg-surface)] hover:text-[var(--color-ink-primary)] transition"
+          >
+            {t("privacy.back")}
+          </Link>
+        </div>
+      </article>
+
+      <SiteFooter />
+    </main>
+  );
+}

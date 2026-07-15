@@ -11,7 +11,8 @@ export function NegotiationPanel({ clauses, isMedBill = false }: { clauses: Risk
   const [email, setEmail] = useState<{ subject: string; body: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const critical = clauses.filter((c) => c.severity >= 3);
+  // Abstained clauses (severity null) are excluded: there is no verdict to negotiate from.
+  const critical = clauses.filter((c) => c.severity !== null && c.severity >= 3);
 
   async function generate() {
     setLoading(true);

@@ -3,13 +3,21 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { streamAnalysis } from "@/lib/api";
+import {
+  AnalyzeError,
+  CONSENT_VERSION,
+  streamAnalysis,
+  type AnalysisData,
+  type BlockedResult,
+} from "@/lib/api";
 import { saveAnalysis, savePDFBytes } from "@/lib/storage";
 import { IndustrySelector } from "@/components/industry-selector";
 import { DemoButton } from "@/components/demo-button";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { useLocale } from "@/components/locale-provider";
 import { SiteFooter } from "@/components/site-footer";
+import { ConsentGate } from "@/components/consent-gate";
+import { BlockedScreen } from "@/components/blocked-result";
 import type { Industry } from "@/lib/industry";
 
 export default function LeasePage() {
@@ -21,32 +29,51 @@ export default function LeasePage() {
   const [stage, setStage] = useState<string>("");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState<BlockedResult | null>(null);
   const [industry, setIndustry] = useState<Industry | null>(null);
+  // 152-ФЗ: unchecked on every mount, never persisted (see app/page.tsx).
+  const [consented, setConsented] = useState(false);
+  const [consentNudge, setConsentNudge] = useState(false);
 
   async function handleFile(file: File) {
+    if (!consented) {
+      setConsentNudge(true);
+      setError(t("consent.required"));
+      return;
+    }
     setError(null);
+    setBlocked(null);
     setLoading(true);
     setStage("uploading");
     setProgress(5);
     try {
       const pdfBuf = await file.arrayBuffer();
-      for await (const ev of streamAnalysis(file, industry)) {
+      for await (const ev of streamAnalysis(file, industry, CONSENT_VERSION)) {
         setStage(ev.stage);
         setProgress(ev.progress);
         if (ev.stage === "done" && ev.data) {
-          const id = saveAnalysis(ev.data);
+          const id = saveAnalysis(ev.data as AnalysisData);
           savePDFBytes(id, pdfBuf);
           router.push(`/analyze/${id}`);
           return;
         }
+        if (ev.stage === "blocked" && ev.data) {
+          setBlocked(ev.data as BlockedResult);
+          setLoading(false);
+          return;
+        }
         if (ev.stage === "error") {
-          setError(ev.message);
+          setError(ev.message || t("err.unknown"));
           setLoading(false);
           return;
         }
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Upload failed");
+      if (e instanceof AnalyzeError) {
+        setError(e.serverMessage || t(`err.${e.code}`));
+      } else {
+        setError(t("err.network"));
+      }
       setLoading(false);
     }
   }
@@ -64,12 +91,8 @@ export default function LeasePage() {
             <span className="font-mono text-sm tracking-widest uppercase">SignSafe</span>
           </Link>
           <nav className="flex items-center gap-6 font-mono text-xs tracking-widest uppercase text-[var(--color-ink-secondary)]">
-            <Link href="/elder-care" className="hidden md:inline text-[var(--color-accent-signal)] hover:text-[var(--color-ink-primary)] transition">
-              {t("nav.elderCare")}
-            </Link>
-            <Link href="/medical-bill" className="hidden md:inline text-[var(--color-accent-signal)] hover:text-[var(--color-ink-primary)] transition">
-              {t("nav.medicalBill")}
-            </Link>
+            {/* nav links to /elder-care and /medical-bill removed — both presets are
+                retired in RU v1 and their routes now only explain the removal. */}
             <a href="#how" className="hidden md:inline hover:text-[var(--color-ink-primary)] transition">{t("nav.how")}</a>
             <Link href="/history" className="hover:text-[var(--color-ink-primary)] transition">{t("nav.history")}</Link>
             <LocaleSwitcher />
@@ -144,33 +167,40 @@ export default function LeasePage() {
               </div>
             </div>
 
-            <Link
-              href="/elder-care"
-              className="mt-12 block border border-[var(--color-divider)] bg-[var(--color-bg-surface)] hover:bg-[var(--color-bg-elevated)] hover:border-[var(--color-accent-signal)] transition-colors p-6 reveal-up group"
-            >
-              <div className="flex items-start justify-between gap-6">
-                <div>
-                  <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-accent-signal)] mb-2">
-                    {t("home.pathSwitcher.label")}
-                  </div>
-                  <div className="font-display text-2xl md:text-3xl mb-1">
-                    {t("home.pathSwitcher.elder")}
-                  </div>
-                  <div className="font-body text-sm text-[var(--color-ink-secondary)]">
-                    {t("home.pathSwitcher.elderHint")}
-                  </div>
-                </div>
-                <div className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)] group-hover:text-[var(--color-accent-signal)] transition-colors whitespace-nowrap">
-                  {t("home.pathSwitcher.cta")}
-                </div>
-              </div>
-            </Link>
+            {/* A promo card for /elder-care used to sit here. It advertised a retired
+                US-law preset and rendered four undefined i18n keys as raw text. */}
 
             <div className="mt-12 reveal-up">
               <IndustrySelector value={industry} onChange={setIndustry} />
             </div>
 
+            {/* 152-ФЗ consent — read before a file is picked, same gate as the home page */}
             <div className="mt-8 reveal-up">
+              <ConsentGate
+                accepted={consented}
+                onChange={(v) => {
+                  setConsented(v);
+                  if (v) {
+                    setConsentNudge(false);
+                    setError(null);
+                  }
+                }}
+                showRequiredHint={consentNudge}
+              />
+            </div>
+
+            <div className="mt-8 reveal-up">
+              {blocked ? (
+                <BlockedScreen
+                  result={blocked}
+                  onReset={() => {
+                    setBlocked(null);
+                    setError(null);
+                    setStage("");
+                    setProgress(0);
+                  }}
+                />
+              ) : (
               <div
                 onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
                 onDragLeave={() => setDragging(false)}
@@ -184,7 +214,9 @@ export default function LeasePage() {
                   dragging
                     ? "border-[var(--color-accent-signal)] bg-[var(--color-bg-surface)]"
                     : "border-[var(--color-divider)] bg-transparent"
-                } border-dashed p-12 md:p-16 transition-colors`}
+                } border-dashed p-8 md:p-16 transition-colors ${
+                  !consented && !loading ? "opacity-60" : ""
+                }`}
               >
                 {!loading ? (
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
@@ -192,17 +224,24 @@ export default function LeasePage() {
                       <div className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)] mb-2">
                         {t("upload.step")}
                       </div>
-                      <div className="font-display text-3xl md:text-4xl">
+                      <div className="font-display text-2xl md:text-4xl">
                         {t("upload.drop")}
                       </div>
-                      <div className="font-body text-[var(--color-ink-secondary)] mt-2">
+                      <div className="font-body text-sm md:text-base text-[var(--color-ink-secondary)] mt-2">
                         {t("upload.limits")}
                       </div>
                     </div>
                     <button
                       type="button"
-                      onClick={() => inputRef.current?.click()}
-                      className="bg-[var(--color-accent-signal)] text-[var(--color-bg-base)] px-8 py-5 font-mono text-sm tracking-widest uppercase font-semibold hover:bg-[var(--color-ink-primary)] transition-colors"
+                      onClick={() => {
+                        if (!consented) {
+                          setConsentNudge(true);
+                          setError(t("consent.required"));
+                          return;
+                        }
+                        inputRef.current?.click();
+                      }}
+                      className="w-full md:w-auto bg-[var(--color-accent-signal)] text-[var(--color-bg-base)] px-8 py-5 font-mono text-sm tracking-widest uppercase font-semibold hover:bg-[var(--color-ink-primary)] transition-colors"
                     >
                       {t("upload.select")}
                     </button>
@@ -237,10 +276,17 @@ export default function LeasePage() {
                   }}
                 />
               </div>
+              )}
 
               {error && (
-                <div className="mt-4 border border-[var(--color-risk-critical)] px-4 py-3 font-mono text-xs text-[var(--color-risk-critical)]">
-                  ERROR // {error}
+                <div
+                  role="alert"
+                  className="mt-4 border border-[var(--color-risk-critical)] px-4 py-3 font-body text-sm text-[var(--color-risk-critical)]"
+                >
+                  <span className="font-mono text-[10px] tracking-widest uppercase">
+                    {t("err.label")} //{" "}
+                  </span>
+                  {error}
                 </div>
               )}
 

@@ -1,14 +1,32 @@
 "use client";
 
 import jsPDF from "jspdf";
-import type { AnalysisData } from "./api";
+import { UI_EN } from "./i18n";
+import { deriveSeveritySummary, isAbstained, type AnalysisData, type RiskClause } from "./api";
+import { isResidentialLease } from "./industry";
+
+/**
+ * The report is rendered by rasterizing a hidden DOM tree (html2canvas) and placing the
+ * bitmap into jsPDF — jsPDF's own text layer is only used for the page numbers, which are
+ * ASCII. That means Cyrillic renders through the *document's* fonts, not jsPDF's built-in
+ * Helvetica (which has no Cyrillic glyphs and would produce tofu). The report therefore
+ * pins "PT Sans" — vendored at public/fonts, declared @font-face in globals.css — and
+ * exportAnalysisToPDF awaits document.fonts.ready before rasterizing so the glyphs are
+ * actually available at draw time.
+ */
+const RU_FONT_STACK = "'PT Sans', 'Arial', sans-serif";
+
+// The label strings live in the i18n dict (RU source). The export runs outside React, so
+// it reads UI_EN directly rather than through the useLocale hook: the PDF is always the
+// RU source text, never a runtime-translated locale.
+const L = (key: string): string => UI_EN[key] ?? key;
 
 const SEVERITY_LABEL: Record<number, string> = {
-  1: "INFO",
-  2: "CAUTION",
-  3: "WARNING",
-  4: "CRITICAL",
-  5: "DEAL-BREAKER",
+  1: L("pdf.severity.info"),
+  2: L("pdf.severity.caution"),
+  3: L("pdf.severity.warning"),
+  4: L("pdf.severity.critical"),
+  5: L("pdf.severity.dealBreaker"),
 };
 
 const SEVERITY_COLOR: Record<number, string> = {
@@ -19,20 +37,33 @@ const SEVERITY_COLOR: Record<number, string> = {
   5: "#FF003C",
 };
 
-const REC_COLOR: Record<string, string> = {
-  SAFE_TO_SIGN: "#2D9D5A",
-  NEGOTIATE_FIRST: "#E07A1A",
-  WALK_AWAY: "#C8102E",
+// Abstention has no risk colour by design — it is the absence of a verdict.
+const ABSTAIN_COLOR = "#7C5CFF";
+
+const LEGALITY_META: Record<string, { label: string; color: string }> = {
+  void: { label: L("legality.void"), color: "#FF003C" },
+  disputable: { label: L("legality.disputable"), color: "#FF8A3D" },
+  ok: { label: L("legality.ok"), color: "#2D9D5A" },
 };
 
+function severityLabel(clause: RiskClause): string {
+  return isAbstained(clause) ? L("pdf.severity.abstained") : SEVERITY_LABEL[clause.severity as number];
+}
+
+function severityColor(clause: RiskClause): string {
+  return isAbstained(clause) ? ABSTAIN_COLOR : SEVERITY_COLOR[clause.severity as number];
+}
+
 function buildReportHTML(data: AnalysisData): string {
-  const sortedClauses = data.risk_clauses.slice().sort((a, b) => b.severity - a.severity);
-  const recColor = REC_COLOR[data.recommendation] || "#333";
+  const rank = (c: RiskClause) => (isAbstained(c) ? -1 : (c.severity as number));
+  const sortedClauses = data.risk_clauses.slice().sort((a, b) => rank(b) - rank(a));
+  const summary = data.severity_summary ?? deriveSeveritySummary(data.risk_clauses);
+  const isTenant = isResidentialLease(data.industry ?? null);
   const meta = [
-    `${data.num_pages} PAGES`,
-    `${data.risk_clauses.length} CLAUSES FLAGGED`,
-    data.industry ? `INDUSTRY: ${data.industry.toUpperCase()}` : null,
-    data.used_ocr ? "OCR USED" : null,
+    `${data.num_pages} ${L("pdf.pages")}`,
+    `${data.risk_clauses.length} ${L("pdf.clausesFlagged")}`,
+    data.industry ? `${L("pdf.docType")}: ${L(`industry.${data.industry}`)}` : null,
+    data.used_ocr ? L("pdf.ocrUsed") : null,
   ]
     .filter(Boolean)
     .join("  ·  ");
@@ -44,41 +75,86 @@ function buildReportHTML(data: AnalysisData): string {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
 
-  const fontStack =
-    "'Inter', 'Helvetica Neue', 'Arial', 'Noto Sans', 'Noto Sans CJK SC', 'PingFang SC', 'Microsoft YaHei', sans-serif";
-  const serifStack =
-    "'Georgia', 'Times New Roman', 'Noto Serif', 'Noto Serif CJK SC', serif";
+  // Both stacks resolve to PT Sans: it is the only vendored face with Cyrillic coverage,
+  // and a Latin-only serif here would silently tofu the entire Russian report.
+  const fontStack = RU_FONT_STACK;
+  const serifStack = RU_FONT_STACK;
 
   const clausesHTML = sortedClauses
-    .map(
-      (c, i) => `
+    .map((c, i) => {
+      const color = severityColor(c);
+      const legality = c.legality ? LEGALITY_META[c.legality] : null;
+      return `
     <div class="clause" style="page-break-inside: avoid;">
       <div class="clause-header">
-        <div class="clause-bar" style="background:${SEVERITY_COLOR[c.severity]}"></div>
+        <div class="clause-bar" style="background:${color}"></div>
         <div class="clause-meta">
-          <div class="mono small muted">CLAUSE_${String(i + 1).padStart(2, "0")} / ${escape(c.clause_type.toUpperCase())} · PAGE ${c.page_number}</div>
+          <div class="mono small muted">${L("pdf.clause")}_${String(i + 1).padStart(2, "0")} · ${L("pdf.page")} ${c.page_number}</div>
           <h3 class="clause-title">${escape(c.title)}</h3>
-          <div class="severity-label" style="color:${SEVERITY_COLOR[c.severity]}">${SEVERITY_LABEL[c.severity]}</div>
+          <div class="severity-label" style="color:${color}">${severityLabel(c)}</div>
         </div>
       </div>
-      <blockquote class="quote">"${escape(c.original_text)}"</blockquote>
+      ${
+        legality
+          ? `<div class="legality" style="border-color:${legality.color}">
+               <div class="mono small" style="color:${legality.color};font-weight:600;">
+                 ${L("pdf.legality")}: ${legality.label}${c.norm_ref ? ` · ${escape(c.norm_ref)}` : ""}
+               </div>
+               ${c.legality_gloss ? `<div class="section-body" style="margin-top:4px;">${escape(c.legality_gloss)}</div>` : ""}
+             </div>`
+          : ""
+      }
+      <blockquote class="quote">«${escape(c.original_text)}»</blockquote>
       <div class="section">
-        <div class="section-label">PLAIN ENGLISH</div>
+        <div class="section-label">${L("pdf.plainEnglish")}</div>
         <div class="section-body">${escape(c.plain_english)}</div>
       </div>
       <div class="section">
-        <div class="section-label">WHY IT'S RISKY</div>
+        <div class="section-label">${L("pdf.whyRisky")}</div>
         <div class="section-body">${escape(c.why_risky)}</div>
       </div>
       <div class="section counter">
-        <div class="section-label" style="color:#2D9D5A">COUNTER LANGUAGE</div>
+        <div class="section-label" style="color:#2D9D5A">${L("pdf.counter")}</div>
         <div class="section-body">${escape(c.negotiation_counter)}</div>
       </div>
-      ${c.benchmark ? `<div class="benchmark mono small muted">BENCHMARK · ${escape(c.benchmark)}</div>` : ""}
+      ${c.benchmark ? `<div class="benchmark mono small muted">${L("pdf.benchmark")} · ${escape(c.benchmark)}</div>` : ""}
     </div>
-  `,
-    )
+  `;
+    })
     .join("");
+
+  // Pre-signing checklist — tenant profile only, void first (mirrors the on-screen view).
+  const legalityRank: Record<string, number> = { void: 0, disputable: 1 };
+  const checklist = data.risk_clauses
+    .filter((c) => c.legality === "void" || c.legality === "disputable")
+    .sort((a, b) => (legalityRank[a.legality!] ?? 9) - (legalityRank[b.legality!] ?? 9));
+
+  const checklistHTML =
+    isTenant && checklist.length > 0
+      ? `<div class="section-title">─── ${L("checklist.title")} · ${checklist.length} ───</div>
+         <div class="checklist">
+           ${checklist
+             .map(
+               (c) => `
+             <div class="checklist-item">
+               <div class="checklist-title" style="color:${LEGALITY_META[c.legality!].color}">
+                 ${LEGALITY_META[c.legality!].label} · ${escape(c.title)}
+               </div>
+               ${c.legality_gloss ? `<div class="section-body">${escape(c.legality_gloss)}</div>` : ""}
+               ${c.norm_ref ? `<div class="mono small muted">${escape(c.norm_ref)}</div>` : ""}
+             </div>`,
+             )
+             .join("")}
+         </div>
+         <div class="disclaimer">${L("checklist.disclaimer")}</div>`
+      : "";
+
+  const redactionHTML =
+    data.redacted_categories && data.redacted_categories.length > 0
+      ? `<div class="meta-line" style="border:0;padding:0;margin-bottom:16px;">
+           ${L("pdf.redacted")}: ${escape(data.redacted_categories.join(" · "))}
+         </div>`
+      : "";
 
   return `
     <div id="pdf-report" style="
@@ -91,14 +167,14 @@ function buildReportHTML(data: AnalysisData): string {
       line-height: 1.5;
     ">
       <style>
-        #pdf-report .mono { font-family: 'JetBrains Mono', 'Courier New', monospace; letter-spacing: 0.05em; }
+        #pdf-report .mono { font-family: ${fontStack}; letter-spacing: 0.05em; }
         #pdf-report .small { font-size: 9px; }
         #pdf-report .muted { color: #888; }
         #pdf-report .header {
           display: flex;
           align-items: center;
           gap: 12px;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: ${fontStack};
           font-size: 9px;
           color: #888;
           letter-spacing: 0.15em;
@@ -122,7 +198,7 @@ function buildReportHTML(data: AnalysisData): string {
           word-break: break-word;
         }
         #pdf-report .meta-line {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: ${fontStack};
           font-size: 9px;
           color: #888;
           letter-spacing: 0.1em;
@@ -130,37 +206,65 @@ function buildReportHTML(data: AnalysisData): string {
           padding-bottom: 16px;
           border-bottom: 1px solid #eee;
         }
-        #pdf-report .verdict {
-          display: flex;
-          align-items: stretch;
-          gap: 16px;
-          padding: 16px;
-          background: #fafafa;
-          margin-bottom: 24px;
-          border-left: 6px solid ${recColor};
+        #pdf-report .reliability {
+          border: 1px solid #7C5CFF;
+          padding: 12px 16px;
+          margin-bottom: 20px;
+          font-family: ${fontStack};
+          font-size: 10px;
+          line-height: 1.5;
+          color: #333;
         }
-        #pdf-report .verdict-score-block { flex: 1; }
-        #pdf-report .verdict-label {
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 8px;
-          color: #888;
-          letter-spacing: 0.15em;
+        #pdf-report .counts {
+          display: flex;
+          gap: 12px;
+          margin-bottom: 24px;
+        }
+        #pdf-report .count-cell {
+          flex: 1;
+          padding: 12px;
+          background: #fafafa;
+          border-top: 3px solid #ccc;
+        }
+        #pdf-report .count-num {
+          font-family: ${serifStack};
+          font-size: 32px;
+          line-height: 1;
+          font-weight: 700;
+        }
+        #pdf-report .count-label {
+          font-family: ${fontStack};
+          font-size: 7px;
+          letter-spacing: 0.1em;
+          margin-top: 4px;
+        }
+        #pdf-report .legality {
+          border-left: 3px solid #888;
+          padding: 8px 12px;
+          margin: 0 0 10px;
+          background: #fafafa;
+        }
+        #pdf-report .checklist { margin-bottom: 16px; }
+        #pdf-report .checklist-item {
+          padding: 10px 0;
+          border-bottom: 1px solid #eee;
+          page-break-inside: avoid;
+        }
+        #pdf-report .checklist-title {
+          font-family: ${fontStack};
+          font-size: 9px;
+          font-weight: 600;
+          letter-spacing: 0.08em;
           margin-bottom: 4px;
         }
-        #pdf-report .verdict-score {
-          font-family: ${serifStack};
-          font-size: 56px;
-          line-height: 1;
-          color: ${recColor};
-          font-weight: 400;
-        }
-        #pdf-report .verdict-rec {
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 12px;
-          font-weight: 600;
-          color: ${recColor};
-          letter-spacing: 0.1em;
-          margin-top: 8px;
+        #pdf-report .disclaimer {
+          font-family: ${fontStack};
+          font-size: 9px;
+          color: #666;
+          line-height: 1.5;
+          padding: 10px 12px;
+          background: #fafafa;
+          margin-bottom: 24px;
         }
         #pdf-report .summary {
           font-family: ${serifStack};
@@ -171,7 +275,7 @@ function buildReportHTML(data: AnalysisData): string {
           background: #fafafa;
         }
         #pdf-report .section-title {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: ${fontStack};
           font-size: 9px;
           color: #888;
           letter-spacing: 0.15em;
@@ -218,7 +322,7 @@ function buildReportHTML(data: AnalysisData): string {
           line-height: 1.2;
         }
         #pdf-report .severity-label {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: ${fontStack};
           font-size: 9px;
           font-weight: 600;
           letter-spacing: 0.15em;
@@ -236,7 +340,7 @@ function buildReportHTML(data: AnalysisData): string {
         }
         #pdf-report .section { margin-bottom: 10px; }
         #pdf-report .section-label {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: ${fontStack};
           font-size: 8px;
           color: #888;
           letter-spacing: 0.15em;
@@ -254,32 +358,47 @@ function buildReportHTML(data: AnalysisData): string {
 
       <div class="header">
         <div class="header-mark">§</div>
-        <div>SIGNSAFE · LEASE FORENSICS REPORT</div>
+        <div>${L("pdf.reportTitle")}</div>
         <div class="header-spacer"></div>
-        <div>${new Date().toLocaleString()}</div>
+        <div>${new Date().toLocaleString("ru-RU")}</div>
       </div>
 
       <h1 class="title">${escape(data.filename)}</h1>
       <div class="meta-line">${escape(meta)}</div>
 
-      <div class="verdict">
-        <div class="verdict-score-block">
-          <div class="verdict-label">OVERALL RISK SCORE</div>
-          <div class="verdict-score">${data.overall_risk_score}<span style="font-family:monospace;font-size:14px;color:#999;"> / 100</span></div>
-          <div class="verdict-rec">→ ${data.recommendation.replace(/_/g, " ")}</div>
+      ${redactionHTML}
+
+      <div class="reliability">${L("reliability.body")}</div>
+
+      <div class="counts">
+        <div class="count-cell" style="border-top-color:${SEVERITY_COLOR[4]}">
+          <div class="count-num" style="color:${SEVERITY_COLOR[4]}">${summary.critical}</div>
+          <div class="count-label" style="color:${SEVERITY_COLOR[4]}">${L("summary.critical")}</div>
+        </div>
+        <div class="count-cell" style="border-top-color:${SEVERITY_COLOR[3]}">
+          <div class="count-num" style="color:${SEVERITY_COLOR[3]}">${summary.disputable}</div>
+          <div class="count-label" style="color:${SEVERITY_COLOR[3]}">${L("summary.disputable")}</div>
+        </div>
+        <div class="count-cell" style="border-top-color:${SEVERITY_COLOR[1]}">
+          <div class="count-num" style="color:${SEVERITY_COLOR[1]}">${summary.info}</div>
+          <div class="count-label" style="color:${SEVERITY_COLOR[1]}">${L("summary.info")}</div>
+        </div>
+        <div class="count-cell" style="border-top-color:${ABSTAIN_COLOR}">
+          <div class="count-num" style="color:${ABSTAIN_COLOR}">${summary.abstained}</div>
+          <div class="count-label" style="color:${ABSTAIN_COLOR}">${L("summary.abstained")}</div>
         </div>
       </div>
 
       ${
         data.summary
-          ? `<div class="section-title">─── EXECUTIVE SUMMARY ───</div>
+          ? `<div class="section-title">─── ${L("pdf.summary")} ───</div>
              <div class="summary">${escape(data.summary).replace(/\n/g, "<br>")}</div>`
           : ""
       }
 
       ${
         data.top_3_concerns.length > 0
-          ? `<div class="section-title">─── TOP 3 CONCERNS ───</div>
+          ? `<div class="section-title">─── ${L("pdf.top3")} ───</div>
              <div class="concerns">
                ${data.top_3_concerns
                  .map(
@@ -294,11 +413,13 @@ function buildReportHTML(data: AnalysisData): string {
           : ""
       }
 
-      <div class="section-title">─── FLAGGED CLAUSES · ${data.risk_clauses.length} ───</div>
+      ${checklistHTML}
+
+      <div class="section-title">─── ${L("pdf.flagged")} · ${data.risk_clauses.length} ───</div>
       ${clausesHTML}
 
-      <div style="margin-top:32px;padding-top:16px;border-top:1px solid #ccc;font-family:'JetBrains Mono',monospace;font-size:8px;color:#999;letter-spacing:0.1em;text-align:center;">
-        SIGNSAFE · EDUCATIONAL TOOL · NOT LEGAL ADVICE · CONSULT A LICENSED ATTORNEY
+      <div style="margin-top:32px;padding-top:16px;border-top:1px solid #ccc;font-family:${fontStack};font-size:8px;color:#999;letter-spacing:0.1em;text-align:center;">
+        ${L("pdf.footer")}
       </div>
     </div>
   `;
@@ -320,7 +441,19 @@ export async function exportAnalysisToPDF(data: AnalysisData): Promise<void> {
     const reportEl = wrapper.querySelector<HTMLDivElement>("#pdf-report");
     if (!reportEl) throw new Error("Report element missing");
 
-    // Wait a tick for fonts/layout
+    // PT Sans must be resolved before html2canvas rasterizes: it snapshots whatever the
+    // layout resolves to at draw time, so exporting during `font-display: swap` fallback
+    // bakes the fallback face (or tofu) into the PDF permanently.
+    if (document.fonts) {
+      try {
+        await document.fonts.load("400 12px 'PT Sans'");
+        await document.fonts.load("700 12px 'PT Sans'");
+        await document.fonts.ready;
+      } catch {
+        // Font loading is best-effort — a failure here degrades glyphs, not the export.
+      }
+    }
+    // Wait a tick for layout to settle
     await new Promise((r) => setTimeout(r, 100));
 
     const canvas = await html2canvas(reportEl, {

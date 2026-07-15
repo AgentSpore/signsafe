@@ -1,164 +1,216 @@
-import type { AnalysisData } from "./api";
+import { deriveSeveritySummary, type AnalysisData, type RiskClause } from "./api";
 
-/** Pre-computed demo analysis — no backend call, instant display. */
+/**
+ * Pre-computed demo analysis — no backend call, instant display.
+ *
+ * A realistic договор найма жилого помещения (residential lease to an individual, so the
+ * parties are наниматель/наймодатель — NOT арендатор/арендодатель, which belong to
+ * commercial аренда under ГК гл. 34).
+ *
+ * The legality / gloss / norm_ref values below are copied verbatim from the backend's
+ * deterministic allowlist (src/signsafe/services/tenant_legality.py) — the demo must show
+ * exactly what the real pipeline emits, and norm refs are never free-form.
+ *
+ * RU-law nuance the planted clauses deliberately encode:
+ *  - Rent increase (ГК ст. 682) is ALLOWED where the contract provides for it. The demo
+ *    flags the unlimited frequency + opaque formula + short notice, not the mere existence
+ *    of an increase clause → 🟠 disputable / severity 3, never 🔴.
+ *  - Early termination (ГК ст. 687): the наниматель may terminate with 3 months' written
+ *    notice. A penalty restricting that is contentious → 🟠 «спорно», not blanket void.
+ *  - Deposit is an обеспечительный платёж (ГК ст. 381.1): withholding is not automatically
+ *    unlawful, so the flag targets the vague grounds / automatic forfeiture / no deadline.
+ *  - Only внесудебное выселение (ГК ст. 687, 688) is 🔴 void — termination of a residential
+ *    lease by the landlord requires a court.
+ */
+
+const DEMO_CLAUSES: RiskClause[] = [
+  {
+    clause_type: "landlord_termination",
+    severity: 5,
+    confidence: "high",
+    title: "Выселение без суда за три дня",
+    original_text:
+      "Наймодатель вправе в одностороннем внесудебном порядке расторгнуть настоящий Договор и потребовать освобождения Помещения в течение 3 (трёх) календарных дней, уведомив Нанимателя любым способом, включая сообщение в мессенджере.",
+    page_number: 4,
+    plain_english:
+      "Наймодатель прописал себе право выгнать вас за три дня сообщением в мессенджере, без суда и без причины.",
+    why_risky:
+      "Это самый опасный пункт договора: он лишает вас жилья в любой момент. Если вы внесли депозит и оплатили месяц вперёд, вернуть деньги при таком выселении будет нечем — договор как бы «разрешает» наймодателю не объясняться.",
+    negotiation_counter:
+      "Заменить на: «Договор может быть расторгнут по требованию Наймодателя только в судебном порядке по основаниям, предусмотренным статьёй 687 ГК РФ». Срок уведомления — не менее трёх месяцев, уведомление — в письменной форме.",
+    benchmark: "Расторжение по инициативе наймодателя — только через суд",
+    legality: "void",
+    legality_gloss:
+      "Внесудебное выселение или немотивированное досрочное расторжение по инициативе наймодателя, вероятно, ничтожно — расторжение договора найма допускается только в судебном порядке.",
+    norm_ref: "ГК РФ ст. 687, 688",
+  },
+  {
+    clause_type: "security_deposit",
+    severity: 4,
+    confidence: "high",
+    title: "Депозит удерживается «по усмотрению» и без срока возврата",
+    original_text:
+      "Обеспечительный платёж в размере 60 000 (шестьдесят тысяч) рублей удерживается Наймодателем полностью при наличии любых претензий к состоянию Помещения, определяемых Наймодателем по своему усмотрению. Срок возврата платежа Договором не устанавливается.",
+    page_number: 2,
+    plain_english:
+      "Наймодатель сам решает, есть ли к вам претензии, и на этом основании оставляет себе весь депозит — 60 000 ₽. Когда он обязан вернуть остаток, в договоре не написано вообще.",
+    why_risky:
+      "«По своему усмотрению» и отсутствие срока возврата — связка, из-за которой депозит чаще всего и не возвращают: спорить не с чем, потому что критериев нет, и просрочки формально тоже нет. Без описи имущества при заселении доказать, что царапина была до вас, практически невозможно.",
+    negotiation_counter:
+      "Прописать: удержание только за подтверждённый документами ущерб, по акту с описью и расчётом суммы; естественный износ не удерживается; остаток возвращается в течение 5 рабочих дней после подписания акта возврата.",
+    benchmark: "Возврат в течение 3-5 рабочих дней по акту — обычная практика",
+    legality: "disputable",
+    legality_gloss:
+      "Удержание обеспечительного платежа само по себе не всегда неправомерно, но расплывчатые основания, автоматическое удержание без описи или без срока возврата, вероятно, можно оспорить — за естественный износ удержание спорно.",
+    norm_ref: "ГК РФ ст. 381.1, 622",
+  },
+  {
+    clause_type: "maintenance_shift",
+    severity: 4,
+    confidence: "high",
+    title: "Наниматель отвечает за любой износ, включая естественный",
+    original_text:
+      "Наниматель несёт полную ответственность за любое ухудшение состояния Помещения, мебели и бытовой техники, включая естественный износ, и возмещает Наймодателю стоимость замены имущества по ценам приобретения без учёта амортизации.",
+    page_number: 3,
+    plain_english:
+      "Выцвели обои, износился диван, у холодильника через пять лет отказал компрессор — платите вы, причём по цене нового.",
+    why_risky:
+      "Естественный износ — это то, что происходит с вещами само по себе от времени и обычного пользования. Условие переносит его на вас и запрещает учитывать амортизацию, то есть за пятилетний диван вы заплатите как за новый.",
+    negotiation_counter:
+      "Добавить: «Наниматель не отвечает за естественный (нормальный) износ Помещения и имущества. Возмещение ущерба производится с учётом амортизации, на основании акта приёма-передачи с описью».",
+    benchmark: "Естественный износ — за счёт наймодателя",
+    legality: "disputable",
+    legality_gloss:
+      "Наниматель отвечает за причинённый им ущерб, но возложение ответственности за естественный (нормальный) износ имущества, вероятно, можно оспорить — это чрезмерно широкое условие.",
+    norm_ref: "ГК РФ ст. 678",
+  },
+  {
+    clause_type: "rent_escalation",
+    severity: 3,
+    confidence: "high",
+    title: "Плата повышается без ограничений по частоте и без формулы",
+    original_text:
+      "Наймодатель вправе изменять размер платы за наём в одностороннем порядке неограниченное число раз в течение срока действия Договора, исходя из рыночной ситуации, уведомив Нанимателя за 5 (пять) календарных дней. Изменение может распространяться на предыдущий расчётный период.",
+    page_number: 2,
+    plain_english:
+      "Само по себе право повышать плату законно, если оно записано в договоре. Проблема в другом: сколько угодно раз, без внятной формулы, с предупреждением за 5 дней и задним числом.",
+    why_risky:
+      "Повышение «исходя из рыночной ситуации» проверить невозможно — это не формула, а усмотрение. Обратная сила означает счёт за уже прожитый месяц по новой цене. Пять дней — слишком мало, чтобы найти другое жильё, если сумма вас не устроит.",
+    negotiation_counter:
+      "Оставить право на повышение, но ограничить: не чаще одного раза в 12 месяцев, не более уровня инфляции (индекс потребительских цен Росстата), письменное уведомление не менее чем за 30 дней, без обратной силы.",
+    benchmark: "Один раз в год с уведомлением за 30 дней — обычная практика",
+    legality: "disputable",
+    legality_gloss:
+      "Одностороннее повышение платы допустимо, только если это прямо предусмотрено договором; само по себе такое условие не является нарушением. Спорными, вероятно, будут неограниченная частота, непрозрачная формула, обратная сила или недостаточный срок уведомления.",
+    norm_ref: "ГК РФ ст. 682",
+  },
+  {
+    clause_type: "early_termination",
+    severity: 3,
+    confidence: "high",
+    title: "Штраф два месяца платы за досрочный съезд",
+    original_text:
+      "В случае досрочного расторжения Договора по инициативе Нанимателя Наниматель уплачивает Наймодателю штраф в размере двухмесячной платы за наём (120 000 рублей). Обеспечительный платёж в этом случае возврату не подлежит.",
+    page_number: 4,
+    plain_english:
+      "Съедете раньше срока — с вас 120 000 ₽ штрафа, и депозит тоже не вернут. По закону вы вправе расторгнуть договор, предупредив за три месяца.",
+    why_risky:
+      "Пункт ставит цену вашему праву уйти из квартиры: 120 000 ₽ плюс невозвращённый депозит — это уже 180 000 ₽ за переезд. На такое условие обычно ссылаются, чтобы удержать нанимателя от съезда, даже когда жильё перестало устраивать.",
+    negotiation_counter:
+      "Заменить на: «Наниматель вправе расторгнуть Договор, письменно предупредив Наймодателя за три месяца (ст. 687 ГК РФ). Штраф за досрочное расторжение не взимается, обеспечительный платёж возвращается в общем порядке».",
+    benchmark: "Предупреждение за 1-3 месяца без штрафа",
+    legality: "disputable",
+    legality_gloss:
+      "Наниматель, как правило, вправе расторгнуть договор найма, предупредив наймодателя письменно за три месяца; условие о штрафе, ограничивающее это право, спорно, а неустойку суд может снизить как несоразмерную.",
+    norm_ref: "ГК РФ ст. 687, 330, 333",
+  },
+  {
+    clause_type: "third_party_restriction",
+    severity: 3,
+    confidence: "medium",
+    title: "Запрет вселять кого-либо, включая детей",
+    original_text:
+      "Наниматель не вправе вселять в Помещение любых иных лиц, включая супруга и несовершеннолетних детей, без предварительного письменного согласия Наймодателя.",
+    page_number: 3,
+    plain_english:
+      "Формально по этому пункту вы не можете поселить у себя даже собственного ребёнка, не спросив наймодателя.",
+    why_risky:
+      "Условие затрагивает вселение несовершеннолетних детей, для которого согласие наймодателя по общему правилу не требуется. На практике такой пункт используют как повод для претензий и удержания депозита.",
+    negotiation_counter:
+      "Добавить: «Вселение несовершеннолетних детей Нанимателя производится без согласия Наймодателя. Постоянное проживание супруга и иных членов семьи согласовывается письменно и не может быть ограничено произвольно».",
+    benchmark: null,
+    legality: "disputable",
+    legality_gloss:
+      "Полный запрет вселять членов семьи, включая несовершеннолетних детей, может быть признан недействительным.",
+    norm_ref: "ГК РФ ст. 679, 680",
+  },
+  {
+    // Honesty layer: the model abstains — severity stays null, so the UI shows
+    // «не удалось уверенно определить» instead of inventing a colour.
+    clause_type: "other",
+    severity: null,
+    confidence: "insufficient",
+    title: "Условие о «сохранности показаний счётчиков»",
+    original_text:
+      "Наниматель обеспечивает сохранность показаний приборов учёта в соответствии с приложением № 2 к настоящему Договору.",
+    page_number: 5,
+    plain_english:
+      "Пункт ссылается на приложение № 2, которого в загруженном файле нет, поэтому что именно вы обязуетесь делать — из текста непонятно.",
+    why_risky:
+      "Отсылка к отсутствующему приложению — частый способ спрятать обязанность. Пока приложение не прочитано, оценить этот пункт нельзя ни в вашу пользу, ни против вас.",
+    negotiation_counter:
+      "Запросить приложение № 2 до подписания и зафиксировать показания счётчиков в акте приёма-передачи.",
+    benchmark: null,
+    legality: null,
+    legality_gloss: null,
+    norm_ref: null,
+  },
+];
+
 export const DEMO_ANALYSIS: AnalysisData = {
-  filename: "demo-retail-lease.pdf",
-  num_pages: 12,
-  industry: "retail",
+  filename: "демо-договор-найма.pdf",
+  num_pages: 6,
+  industry: "residential_lease",
   used_ocr: false,
+  ocr_quality_low: false,
+  // What the local redactor masked before the text went to OpenRouter.
+  redacted_categories: ["Паспортные данные", "Телефон", "ФИО", "Адрес"],
   extracted_pages: [
     {
       page_number: 1,
-      text: "COMMERCIAL RETAIL LEASE AGREEMENT\n\nThis Lease is made between Landlord and Tenant for premises located at 100 Main Street. Term: five (5) years commencing 2026-05-01. Base rent: $4,500 per month with annual increase of 5% each year.",
+      text: "ДОГОВОР НАЙМА ЖИЛОГО ПОМЕЩЕНИЯ № 14/26\n\nг. Москва, 12 марта 2026 г.\n\nГражданин [СКРЫТО], паспорт [СКРЫТО], зарегистрированный по адресу: [СКРЫТО], именуемый в дальнейшем «Наймодатель», с одной стороны, и гражданка [СКРЫТО], паспорт [СКРЫТО], именуемая в дальнейшем «Наниматель», с другой стороны, заключили настоящий Договор о нижеследующем.\n\n1. ПРЕДМЕТ ДОГОВОРА\n1.1. Наймодатель передаёт Нанимателю за плату во владение и пользование однокомнатную квартиру общей площадью 38,4 кв. м по адресу: [СКРЫТО].\n1.2. Срок найма: 11 (одиннадцать) месяцев с 15 марта 2026 г.",
+    },
+    {
+      page_number: 2,
+      text: "2. ПЛАТА ЗА НАЁМ И ОБЕСПЕЧИТЕЛЬНЫЙ ПЛАТЁЖ\n2.1. Плата за наём составляет 60 000 (шестьдесят тысяч) рублей в месяц и вносится не позднее 5 числа текущего месяца.\n2.2. Наймодатель вправе изменять размер платы за наём в одностороннем порядке неограниченное число раз в течение срока действия Договора, исходя из рыночной ситуации, уведомив Нанимателя за 5 (пять) календарных дней. Изменение может распространяться на предыдущий расчётный период.\n2.3. Обеспечительный платёж в размере 60 000 (шестьдесят тысяч) рублей удерживается Наймодателем полностью при наличии любых претензий к состоянию Помещения, определяемых Наймодателем по своему усмотрению. Срок возврата платежа Договором не устанавливается.\n2.4. Коммунальные платежи и электроэнергия оплачиваются Нанимателем по показаниям приборов учёта.",
     },
     {
       page_number: 3,
-      text: "PERSONAL GUARANTEE. Tenant's officers personally guarantee all obligations under this Lease without limitation, jointly and severally. Spousal consent required.",
+      text: "3. ПРАВА И ОБЯЗАННОСТИ СТОРОН\n3.1. Наниматель несёт полную ответственность за любое ухудшение состояния Помещения, мебели и бытовой техники, включая естественный износ, и возмещает Наймодателю стоимость замены имущества по ценам приобретения без учёта амортизации.\n3.2. Наниматель не вправе вселять в Помещение любых иных лиц, включая супруга и несовершеннолетних детей, без предварительного письменного согласия Наймодателя.\n3.3. Наймодатель вправе посещать Помещение для проверки его состояния, предупредив Нанимателя не менее чем за 24 часа.",
+    },
+    {
+      page_number: 4,
+      text: "4. РАСТОРЖЕНИЕ ДОГОВОРА\n4.1. Наймодатель вправе в одностороннем внесудебном порядке расторгнуть настоящий Договор и потребовать освобождения Помещения в течение 3 (трёх) календарных дней, уведомив Нанимателя любым способом, включая сообщение в мессенджере.\n4.2. В случае досрочного расторжения Договора по инициативе Нанимателя Наниматель уплачивает Наймодателю штраф в размере двухмесячной платы за наём (120 000 рублей). Обеспечительный платёж в этом случае возврату не подлежит.",
     },
     {
       page_number: 5,
-      text: "COMMON AREA MAINTENANCE. Tenant shall pay its pro rata share of all common area maintenance, operating expenses, capital improvements, and management fees without limitation. Landlord's determination shall be final.",
+      text: "5. ПРОЧИЕ УСЛОВИЯ\n5.1. Наниматель обеспечивает сохранность показаний приборов учёта в соответствии с приложением № 2 к настоящему Договору.\n5.2. Все споры разрешаются путём переговоров, а при недостижении согласия — в суде по месту нахождения Помещения.",
     },
     {
-      page_number: 7,
-      text: "HOLDOVER. If Tenant remains after lease end, rent shall be 200% of base rent plus all consequential damages including lost profits.",
-    },
-    {
-      page_number: 9,
-      text: "EARLY TERMINATION. Landlord may terminate this Lease at Landlord's convenience with 60 days notice. Upon any default, all remaining rent for the full term shall be immediately due and payable.",
-    },
-    {
-      page_number: 10,
-      text: "MAINTENANCE. Tenant is responsible for all repairs including structural, roof, HVAC replacement, and ADA compliance.",
+      page_number: 6,
+      text: "6. РЕКВИЗИТЫ И ПОДПИСИ СТОРОН\n\nНаймодатель: [СКРЫТО]\nТелефон: [СКРЫТО]\nПодпись [СКРЫТО]\n\nНаниматель: [СКРЫТО]\nТелефон: [СКРЫТО]\nПодпись [СКРЫТО]",
     },
   ],
-  overall_risk_score: 82,
+  // No 0-100 score: the backend stopped emitting it (false precision on a free model).
+  overall_risk_score: null,
   recommendation: "NEGOTIATE_FIRST",
   summary:
-    "This retail lease contains several aggressive clauses that disproportionately favor the landlord. The unlimited personal guarantee, 200% holdover penalty, and landlord convenience termination are serious red flags that could expose the tenant to significant financial risk. The CAM provisions lack caps and audit rights, creating unpredictable ongoing costs.\n\nWhile not a complete deal-breaker, the tenant should push back firmly on the top 3 concerns before signing. Most landlords will concede on 1-2 of these points if tenant holds firm.\n\nRecommendation: Do not sign as-is. Negotiate the personal guarantee cap, holdover reduction, and CAM audit rights at minimum.",
+    "Договор найма составлен наймодателем и заметно смещён в его пользу. Самый серьёзный пункт — право выселить нанимателя за три дня во внесудебном порядке: расторжение договора найма по требованию наймодателя допускается только через суд, поэтому такое условие, вероятно, ничтожно. Рядом с ним — депозит 60 000 ₽, который удерживается «по усмотрению» наймодателя и без срока возврата, и ответственность нанимателя за естественный износ по цене нового имущества.\n\nЧасть условий не является нарушением сама по себе, но сформулирована слишком широко. Право повышать плату в одностороннем порядке законно, если оно прямо предусмотрено договором; спорны здесь неограниченная частота, отсутствие внятной формулы, уведомление за 5 дней и обратная сила. Штраф 120 000 ₽ за досрочный съезд не отменяет права нанимателя расторгнуть договор с предупреждением за три месяца — такое условие спорно, а размер неустойки суд может снизить.\n\nПодписывать в текущем виде не стоит. Пункт о внесудебном выселении следует убрать, а условия о депозите, износе, повышении платы и штрафе — привести к формулировкам из блока «Формулировка для торга». До подписания запросите приложение № 2, выписку из ЕГРН и составьте акт приёма-передачи с описью имущества и показаниями счётчиков.",
   top_3_concerns: [
-    "Unlimited personal guarantee with spousal consent exposes personal assets to unlimited liability.",
-    "200% holdover rent plus consequential damages could bankrupt the business on a single missed deadline.",
-    "Landlord can terminate at convenience with only 60 days notice, eliminating tenant security.",
+    "Наймодатель прописал право выселить вас за три дня без суда — расторжение найма допускается только в судебном порядке, поэтому условие, вероятно, ничтожно.",
+    "Депозит 60 000 ₽ удерживается по усмотрению наймодателя, без описи имущества и без срока возврата — оспорить удержание будет практически нечем.",
+    "Ответственность за естественный износ по цене нового имущества: за пятилетний диван или выцветшие обои платить придётся вам.",
   ],
-  risk_clauses: [
-    {
-      clause_type: "personal_guarantee",
-      severity: 5,
-      title: "Unlimited Personal Guarantee",
-      original_text:
-        "Tenant's officers personally guarantee all obligations under this Lease without limitation, jointly and severally. Spousal consent required.",
-      page_number: 3,
-      plain_english:
-        "You and your spouse are personally liable for the entire lease. If the business fails, creditors can come after your home, savings, and joint assets.",
-      why_risky:
-        "Unlimited guarantees are the #1 cause of founder bankruptcy after lease defaults. Most LLCs protect owners — this clause voids that protection entirely.",
-      negotiation_counter:
-        "Cap guarantee at 6 months rent OR convert to 'Good Guy Guarantee' — liable only for unpaid rent until lawful vacating. Remove spousal consent entirely.",
-      benchmark: "Capped 12-month guarantee is market standard",
-    },
-    {
-      clause_type: "holdover_penalty",
-      severity: 5,
-      title: "200% Holdover With Consequential Damages",
-      original_text:
-        "If Tenant remains after lease end, rent shall be 200% of base rent plus all consequential damages including lost profits.",
-      page_number: 7,
-      plain_english:
-        "Stay one day past lease expiration and rent doubles, plus you owe landlord for any future deal that fell through.",
-      why_risky:
-        "Construction delays, permit issues, or a slow new-space buildout are common — this clause makes those ordinary delays catastrophic.",
-      negotiation_counter:
-        "Reduce to 125% for first 60 days. Remove consequential damages entirely — cap at actual additional rent only.",
-      benchmark: "125-150% is typical holdover rate",
-    },
-    {
-      clause_type: "early_termination",
-      severity: 5,
-      title: "Landlord Termination At Convenience",
-      original_text:
-        "Landlord may terminate this Lease at Landlord's convenience with 60 days notice.",
-      page_number: 9,
-      plain_english:
-        "Landlord can kick you out for any reason with 60 days notice, destroying all your build-out investment.",
-      why_risky:
-        "After spending $100K on tenant improvements, being evicted in 60 days is catastrophic. This clause makes the lease effectively month-to-month for the landlord.",
-      negotiation_counter:
-        "Remove entirely. Landlord may terminate only for tenant's uncured material default after 30-day notice.",
-      benchmark: "Termination only for cause is standard",
-    },
-    {
-      clause_type: "cam_charges",
-      severity: 4,
-      title: "Uncapped CAM With No Audit Rights",
-      original_text:
-        "Tenant shall pay its pro rata share of all common area maintenance, operating expenses, capital improvements, and management fees without limitation. Landlord's determination shall be final.",
-      page_number: 5,
-      plain_english:
-        "Landlord can charge unlimited extra fees beyond rent, and you can't verify the numbers.",
-      why_risky:
-        "CAM charges routinely double or triple over the lease term. Without audit rights, landlord can include improper expenses like their own salaries or building upgrades.",
-      negotiation_counter:
-        "Cap CAM increases at 5% annually. Exclude capital improvements. Add annual audit right with 60-day window.",
-      benchmark: "Audit rights are standard in 2026 market",
-    },
-    {
-      clause_type: "relocation_clause",
-      severity: 4,
-      title: "Relocation At Tenant's Expense",
-      original_text:
-        "Landlord may relocate Tenant to comparable space at Tenant's expense upon 30 days notice.",
-      page_number: 8,
-      plain_english:
-        "Landlord can force you into a different space and make you pay for the move.",
-      why_risky:
-        "For retail, location is everything. A forced move to a worse location can destroy foot traffic. Moving costs $20-50K for buildout rebuild.",
-      negotiation_counter:
-        "Landlord covers 100% of moving costs, TI rebuild, and signage. Tenant must consent in writing. Rent abated during move.",
-      benchmark: "Landlord-paid relocation is standard",
-    },
-    {
-      clause_type: "assignment_ban",
-      severity: 3,
-      title: "Assignment With Recapture Right",
-      original_text:
-        "Tenant shall not assign or sublease without Landlord's consent, which may be withheld in sole discretion. Landlord may recapture the premises upon any proposed assignment.",
-      page_number: 6,
-      plain_english:
-        "Landlord can block any sale of your business and take the space back instead.",
-      why_risky:
-        "Kills your exit strategy — if you want to sell the business, the buyer needs lease assignment. Landlord can sabotage any deal.",
-      negotiation_counter:
-        "Landlord consent 'not unreasonably withheld'. Remove recapture or limit to significant use changes only.",
-      benchmark: null,
-    },
-    {
-      clause_type: "rent_escalation",
-      severity: 3,
-      title: "5% Fixed Annual Escalation",
-      original_text: "Annual increase of 5% each year.",
-      page_number: 4,
-      plain_english:
-        "Rent increases 5% every year, regardless of market conditions or inflation.",
-      why_risky:
-        "Over 5 years, compounds to 27.6% higher rent. Far exceeds typical 2-3% market escalation.",
-      negotiation_counter: "Reduce to 3% annual OR CPI-linked with 3% cap.",
-      benchmark: "2.5-3% annual is typical for retail",
-    },
-    {
-      clause_type: "maintenance_shift",
-      severity: 3,
-      title: "Tenant Responsible For Structural",
-      original_text:
-        "Tenant is responsible for all repairs including structural, roof, HVAC replacement, and ADA compliance.",
-      page_number: 10,
-      plain_english:
-        "You pay for major building repairs that the landlord should own — roof, foundation, HVAC, code compliance.",
-      why_risky:
-        "HVAC replacement: $15-40K. Roof repair: $50K+. ADA retrofit: up to $100K. These are landlord responsibilities, not operational expenses.",
-      negotiation_counter:
-        "Tenant responsible for routine maintenance only. Landlord covers structural, roof, and HVAC replacement.",
-      benchmark: "Landlord owns structural in 95% of commercial leases",
-    },
-  ],
+  risk_clauses: DEMO_CLAUSES,
+  severity_summary: deriveSeveritySummary(DEMO_CLAUSES),
 };

@@ -2,9 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { AnalysisData } from "@/lib/api";
+import { isAbstained, type AnalysisData, type RiskClause } from "@/lib/api";
 import { ClauseCard } from "./clause-card";
-import { RiskScore } from "./risk-score";
+import {
+  OcrQualityBanner,
+  RedactionPanel,
+  ReliabilityBanner,
+  SeverityPanel,
+} from "./severity-panel";
 import { ShareButton } from "./share-button";
 import { NegotiationPanel } from "./negotiation-panel";
 import { ExportButton } from "./export-button";
@@ -32,7 +37,9 @@ export function AnalysisView({
   const [translating, setTranslating] = useStateInner(false);
 
   useEffect(() => {
-    if (locale === "en") {
+    if (locale === "ru") {
+      // RU is the source locale (UI_EN holds RU strings) — translating it to itself
+      // would burn an API call and round-trip the text through a translator.
       setDisplayData(data);
       return;
     }
@@ -49,7 +56,7 @@ export function AnalysisView({
   }, [locale, data]);
 
   const forceRetranslate = async () => {
-    if (locale === "en") return;
+    if (locale === "ru") return;
     setTranslating(true);
     try {
       // Clear cached translation for this doc
@@ -71,7 +78,10 @@ export function AnalysisView({
     }
   };
 
-  const sorted = displayData.risk_clauses.slice().sort((a, b) => b.severity - a.severity);
+  // Severity-desc, abstained clauses last: they carry no verdict, so they rank below an
+  // INFO finding instead of jumping to the top via a null→0 coercion.
+  const rank = (c: RiskClause) => (isAbstained(c) ? -1 : (c.severity as number));
+  const sorted = displayData.risk_clauses.slice().sort((a, b) => rank(b) - rank(a));
   // Pre-signing checklist — tenant-profile clauses classified void / disputable, void first.
   const isTenantMode = data.industry === "residential_lease";
   const legalityRank: Record<string, number> = { void: 0, disputable: 1 };
@@ -115,24 +125,31 @@ export function AnalysisView({
             <PDFPreview pdfBytes={pdfBytes} targetPage={jumpPage} />
           </div>
         )}
-        {locale !== "en" && displayData.extracted_pages && displayData.extracted_pages.length > 0 && (
+        {locale !== "ru" && displayData.extracted_pages && displayData.extracted_pages.length > 0 && (
           <TranslatedSource pages={displayData.extracted_pages} />
         )}
         <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
           <section className="lg:col-span-6 space-y-6">
             <div className="border border-[var(--color-divider)] bg-[var(--color-bg-surface)] p-8">
               <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-2">
-                {t("analysis.underReview")}
+                {t("analysis.underReview")} · {t("beta.badge")}
               </div>
-              <h1 className="font-display text-4xl md:text-5xl leading-tight break-words">
+              <h1 className="font-display text-3xl md:text-5xl leading-tight break-words">
                 {displayData.filename}
               </h1>
               <div className="mt-4 font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-secondary)]">
-                {data.num_pages} PAGES · {displayData.risk_clauses.length} CLAUSES FLAGGED
-                {data.industry && ` · ${data.industry.toUpperCase()}`}
-                {data.used_ocr && " · OCR"}
+                {data.num_pages} {t("analysis.pages")} · {displayData.risk_clauses.length}{" "}
+                {t("analysis.clausesFlagged")}
+                {data.industry && ` · ${t(`industry.${data.industry}`)}`}
+                {data.used_ocr && ` · ${t("pdf.ocrUsed")}`}
               </div>
             </div>
+
+            {/* Honesty layer: the reliability notice sits above the findings, not in the
+                footer — it qualifies everything below it. */}
+            <ReliabilityBanner />
+
+            {data.ocr_quality_low && <OcrQualityBanner />}
 
             {displayData.summary && (
               <div className="border border-[var(--color-divider)] bg-[var(--color-bg-surface)] p-8">
@@ -245,7 +262,7 @@ export function AnalysisView({
           <aside className="lg:col-span-4">
             <div className="lg:sticky lg:top-8 space-y-6">
               <div className="flex justify-end gap-2 items-center">
-                {locale !== "en" && (
+                {locale !== "ru" && (
                   <button
                     type="button"
                     onClick={forceRetranslate}
@@ -258,7 +275,8 @@ export function AnalysisView({
                 )}
                 <LocaleSwitcher />
               </div>
-              <RiskScore score={displayData.overall_risk_score} recommendation={displayData.recommendation} />
+              <SeverityPanel data={displayData} />
+              <RedactionPanel categories={data.redacted_categories} />
 
               <div className="border border-[var(--color-divider)] bg-[var(--color-bg-surface)] p-6">
                 <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-3">

@@ -41,9 +41,15 @@ export type ClauseType =
 
 export type Legality = "void" | "disputable" | "ok";
 
+// Free-model honesty layer: the model self-reports confidence and abstains
+// ("insufficient" + severity null) instead of forcing a verdict colour.
+export type Confidence = "high" | "medium" | "insufficient";
+
 export interface RiskClause {
   clause_type: ClauseType;
-  severity: Severity;
+  // Nullable: null = the model abstained (see `confidence`). Never render a colour for it.
+  severity: Severity | null;
+  confidence?: Confidence | null;
   title: string;
   original_text: string;
   page_number: number;
@@ -57,6 +63,11 @@ export interface RiskClause {
   norm_ref?: string | null;
 }
 
+/** True when the model declined to assign a verdict for this clause. */
+export function isAbstained(clause: RiskClause): boolean {
+  return clause.severity === null || clause.severity === undefined;
+}
+
 export type Recommendation =
   | "SAFE_TO_SIGN" | "NEGOTIATE_FIRST" | "WALK_AWAY"
   | "LOOKS_FAIR" | "REVIEW_CAREFULLY" | "DISPUTE_NOW";
@@ -66,36 +77,122 @@ export interface ExtractedPage {
   text: string;
 }
 
+/** Severity counts — replaces the removed 0-100 score (it conveyed false precision). */
+export interface SeveritySummary {
+  critical: number;
+  disputable: number;
+  info: number;
+  abstained: number;
+}
+
 export interface AnalysisData {
   filename: string;
   num_pages: number;
   industry?: string | null;
   used_ocr?: boolean;
+  ocr_quality_low?: boolean;
+  /** RU category labels of the PII masked locally before the text left for the LLM. */
+  redacted_categories?: string[];
   extracted_pages?: ExtractedPage[];
-  overall_risk_score: number;
-  recommendation: Recommendation;
+  /** DEPRECATED — the backend no longer emits a score. Kept nullable for stored analyses. */
+  overall_risk_score?: number | null;
+  recommendation?: Recommendation | null;
   summary: string;
   top_3_concerns: string[];
   risk_clauses: RiskClause[];
+  severity_summary?: SeveritySummary;
+}
+
+/** Typed non-analysis outcomes — the backend refuses rather than fabricating a result. */
+export interface BlockedResult {
+  status: "unsupported_mode" | "not_contract";
+  industry?: string;
+  message: string;
 }
 
 export interface StreamEvent {
-  stage: "extracting" | "analyzing" | "done" | "error";
+  stage: "extracting" | "analyzing" | "done" | "blocked" | "error";
   progress: number;
-  message: string;
-  data?: AnalysisData;
+  message?: string;
+  data?: AnalysisData | BlockedResult;
+}
+
+/**
+ * Consent version sent with every analyze request. MUST be one of the backend's
+ * `accepted_consent_versions` (see src/signsafe/core/config.py) — the endpoint rejects
+ * the upload with 400/422 otherwise.
+ */
+export const CONSENT_VERSION = "ru-v1";
+
+/**
+ * An analyze request that failed before streaming started.
+ *
+ * `serverMessage` is the backend's own RU copy (it already localizes its refusals);
+ * `code` is the fallback the UI translates via the `err.*` i18n keys when the server
+ * said nothing useful (network drop, proxy error, non-JSON body).
+ */
+export class AnalyzeError extends Error {
+  constructor(
+    public readonly code: string,
+    public readonly serverMessage?: string,
+  ) {
+    super(serverMessage || code);
+    this.name = "AnalyzeError";
+  }
+}
+
+async function describeHttpError(res: Response): Promise<AnalyzeError> {
+  // FastAPI shape: {"detail": {"code": "...", "message": "<RU>"}}
+  try {
+    const body = await res.json();
+    const detail = body?.detail;
+    if (detail && typeof detail === "object" && typeof detail.message === "string") {
+      return new AnalyzeError(detail.code ?? "unknown", detail.message);
+    }
+  } catch {
+    // non-JSON body — fall through to a status-derived code
+  }
+  const byStatus: Record<number, string> = {
+    400: "bad_request",
+    413: "file_too_large",
+    422: "consent_version_unknown",
+    429: "rate_limited",
+    502: "upstream",
+    503: "upstream",
+    504: "upstream",
+  };
+  return new AnalyzeError(byStatus[res.status] ?? "unknown");
+}
+
+/**
+ * Derive severity counts client-side for analyses stored before the backend computed
+ * them (the field is a backend computed_field; older localStorage records lack it).
+ */
+export function deriveSeveritySummary(clauses: RiskClause[]): SeveritySummary {
+  const summary: SeveritySummary = { critical: 0, disputable: 0, info: 0, abstained: 0 };
+  for (const c of clauses) {
+    if (isAbstained(c)) summary.abstained += 1;
+    else if (c.severity! >= 4) summary.critical += 1;
+    else if (c.severity! >= 2) summary.disputable += 1;
+    else summary.info += 1;
+  }
+  return summary;
 }
 
 export async function* streamAnalysis(
   file: File,
   industry?: string | null,
+  // Required, not defaulted: the 152-ФЗ consent gate is enforced by the backend, and a
+  // default here would let a caller skip the checkbox and still analyze.
+  consentVersion: string = CONSENT_VERSION,
 ): AsyncGenerator<StreamEvent> {
   const form = new FormData();
   form.append("file", file);
   if (industry) form.append("industry", industry);
+  form.append("consent_version", consentVersion);
 
   const res = await fetch("/api/analyze", { method: "POST", body: form });
-  if (!res.ok || !res.body) throw new Error(`Upload failed: ${res.status}`);
+  if (!res.ok || !res.body) throw await describeHttpError(res);
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";

@@ -103,8 +103,12 @@ export default function HistoryPage() {
               key={e.id}
               className="grid grid-cols-12 gap-4 items-center bg-[var(--color-bg-surface)] border border-[var(--color-divider)] p-6 hover:bg-[var(--color-bg-elevated)] transition"
             >
-              <div className="col-span-1 font-display text-4xl" style={{ color: recColors[e.recommendation] }}>
-                {e.score}
+              <div
+                className="col-span-1 font-display text-4xl"
+                style={{ color: e.critical_count > 0 ? "var(--color-risk-critical)" : "var(--color-ink-tertiary)" }}
+                title={t("summary.critical")}
+              >
+                {e.critical_count ?? 0}
               </div>
               <div className="col-span-6 md:col-span-5">
                 <div className="font-display text-xl leading-tight break-words">{e.filename}</div>
@@ -112,8 +116,13 @@ export default function HistoryPage() {
                   {new Date(e.analyzed_at).toLocaleString()}
                 </div>
               </div>
-              <div className="col-span-3 font-mono text-[10px] tracking-widest uppercase" style={{ color: recColors[e.recommendation] }}>
-                → {recLabels[e.recommendation] || e.recommendation.replace(/_/g, " ")}
+              <div
+                className="col-span-3 font-mono text-[10px] tracking-widest uppercase"
+                style={{ color: e.recommendation ? recColors[e.recommendation] : "var(--color-ink-tertiary)" }}
+              >
+                {e.recommendation
+                  ? `→ ${recLabels[e.recommendation] || e.recommendation.replace(/_/g, " ")}`
+                  : t("summary.critical")}
               </div>
               <div className="col-span-2 md:col-span-3 flex gap-2 justify-end">
                 <Link

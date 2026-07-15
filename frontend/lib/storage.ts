@@ -1,7 +1,7 @@
 "use client";
 
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
-import type { AnalysisData } from "./api";
+import { deriveSeveritySummary, type AnalysisData } from "./api";
 
 const KEY_INDEX = "signsafe:index";
 const KEY_ITEM = (id: string) => `signsafe:doc:${id}`;
@@ -43,9 +43,13 @@ export function loadPDFBytes(id: string): ArrayBuffer | null {
 export interface HistoryEntry {
   id: string;
   filename: string;
-  score: number;
-  recommendation: string;
+  /** Count of severity 4-5 findings. Replaces the removed 0-100 score. */
+  critical_count: number;
+  /** Null when the model abstained from an overall verdict. */
+  recommendation: string | null;
   analyzed_at: string;
+  /** Legacy: entries written before RU v1 still carry a score. Read-only. */
+  score?: number | null;
 }
 
 function randomId(): string {
@@ -73,8 +77,9 @@ export function saveAnalysis(data: AnalysisData): string {
     index.unshift({
       id,
       filename: data.filename,
-      score: data.overall_risk_score,
-      recommendation: data.recommendation,
+      critical_count:
+        data.severity_summary?.critical ?? deriveSeveritySummary(data.risk_clauses).critical,
+      recommendation: data.recommendation ?? null,
       analyzed_at,
     });
     // Cap history and remove old entries

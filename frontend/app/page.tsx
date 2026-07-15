@@ -3,12 +3,20 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { streamAnalysis } from "@/lib/api";
+import {
+  AnalyzeError,
+  CONSENT_VERSION,
+  streamAnalysis,
+  type AnalysisData,
+  type BlockedResult,
+} from "@/lib/api";
 import { saveAnalysis, savePDFBytes } from "@/lib/storage";
 import { DemoButton } from "@/components/demo-button";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { useLocale } from "@/components/locale-provider";
 import { SiteFooter } from "@/components/site-footer";
+import { ConsentGate } from "@/components/consent-gate";
+import { BlockedScreen } from "@/components/blocked-result";
 import { DOCUMENT_TYPES, type Industry } from "@/lib/industry";
 
 export default function HomePage() {
@@ -20,34 +28,63 @@ export default function HomePage() {
   const [stage, setStage] = useState<string>("");
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState<BlockedResult | null>(null);
   const [docType, setDocType] = useState<Industry | null>(null);
+  // 152-ФЗ: starts false on every mount. Never pre-checked, never persisted — a consent
+  // remembered from last visit is not a consent given for this upload.
+  const [consented, setConsented] = useState(false);
+  const [consentNudge, setConsentNudge] = useState(false);
 
   async function handleFile(file: File) {
+    if (!consented) {
+      setConsentNudge(true);
+      setError(t("consent.required"));
+      return;
+    }
     setError(null);
+    setBlocked(null);
     setLoading(true);
     setStage("uploading");
     setProgress(5);
     try {
       const pdfBuf = await file.arrayBuffer();
-      for await (const ev of streamAnalysis(file, docType)) {
+      for await (const ev of streamAnalysis(file, docType, CONSENT_VERSION)) {
         setStage(ev.stage);
         setProgress(ev.progress);
         if (ev.stage === "done" && ev.data) {
-          const id = saveAnalysis(ev.data);
+          const id = saveAnalysis(ev.data as AnalysisData);
           savePDFBytes(id, pdfBuf);
           router.push(`/analyze/${id}`);
           return;
         }
+        // Typed refusal (not a contract / deprecated preset) — a clean screen, not an error.
+        if (ev.stage === "blocked" && ev.data) {
+          setBlocked(ev.data as BlockedResult);
+          setLoading(false);
+          return;
+        }
         if (ev.stage === "error") {
-          setError(ev.message);
+          setError(ev.message || t("err.unknown"));
           setLoading(false);
           return;
         }
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Upload failed");
+      // The backend localizes its own refusals; `code` is our fallback for everything else.
+      if (e instanceof AnalyzeError) {
+        setError(e.serverMessage || t(`err.${e.code}`));
+      } else {
+        setError(t("err.network"));
+      }
       setLoading(false);
     }
+  }
+
+  function resetToUpload() {
+    setBlocked(null);
+    setError(null);
+    setStage("");
+    setProgress(0);
   }
 
   const isRu = locale === "ru";
@@ -77,6 +114,9 @@ export default function HomePage() {
         <div className="grid grid-cols-12 gap-8">
           <aside className="col-span-12 md:col-span-3 space-y-8 reveal-up">
             <div>
+              <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-accent-electric)]">
+                {t("beta.version")}
+              </div>
               <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)]">
                 {t("hero.meta.label")}
               </div>
@@ -110,7 +150,10 @@ export default function HomePage() {
           </aside>
 
           <div className="col-span-12 md:col-span-9">
-            <h1 className="font-display font-normal text-[clamp(3.5rem,10vw,8.5rem)] leading-[0.88] tracking-[-0.035em] reveal-up">
+            <div className="font-mono text-[10px] md:text-xs tracking-[0.2em] uppercase text-[var(--color-accent-electric)] mb-4 reveal-up">
+              {t("beta.hero.kicker")} — {t("beta.badge")}
+            </div>
+            <h1 className="font-display font-normal text-[clamp(2.75rem,10vw,8.5rem)] leading-[0.88] tracking-[-0.035em] reveal-up">
               {t("hero.heading.line1")}<br />
               <span className="italic text-[var(--color-accent-signal)]">{t("hero.heading.dont")}</span><br />
               {t("hero.heading.line3")}
@@ -167,8 +210,26 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* 152-ФЗ consent — above the drop zone, so it is read before a file is picked */}
+            <div className="mt-8 reveal-up">
+              <ConsentGate
+                accepted={consented}
+                onChange={(v) => {
+                  setConsented(v);
+                  if (v) {
+                    setConsentNudge(false);
+                    setError(null);
+                  }
+                }}
+                showRequiredHint={consentNudge}
+              />
+            </div>
+
             {/* Upload drop zone */}
             <div className="mt-8 reveal-up">
+              {blocked ? (
+                <BlockedScreen result={blocked} onReset={resetToUpload} />
+              ) : (
               <div
                 onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
                 onDragLeave={() => setDragging(false)}
@@ -182,7 +243,9 @@ export default function HomePage() {
                   dragging
                     ? "border-[var(--color-accent-signal)] bg-[var(--color-bg-surface)]"
                     : "border-[var(--color-divider)] bg-transparent"
-                } border-dashed p-12 md:p-16 transition-colors`}
+                } border-dashed p-8 md:p-16 transition-colors ${
+                  !consented && !loading ? "opacity-60" : ""
+                }`}
               >
                 {!loading ? (
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
@@ -190,17 +253,24 @@ export default function HomePage() {
                       <div className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-ink-tertiary)] mb-2">
                         {t("upload.step")}
                       </div>
-                      <div className="font-display text-3xl md:text-4xl">
+                      <div className="font-display text-2xl md:text-4xl">
                         {t("upload.drop")}
                       </div>
-                      <div className="font-body text-[var(--color-ink-secondary)] mt-2">
+                      <div className="font-body text-sm md:text-base text-[var(--color-ink-secondary)] mt-2">
                         {t("upload.limits")}
                       </div>
                     </div>
                     <button
                       type="button"
-                      onClick={() => inputRef.current?.click()}
-                      className="bg-[var(--color-accent-signal)] text-[var(--color-bg-base)] px-8 py-5 font-mono text-sm tracking-widest uppercase font-semibold hover:bg-[var(--color-ink-primary)] transition-colors"
+                      onClick={() => {
+                        if (!consented) {
+                          setConsentNudge(true);
+                          setError(t("consent.required"));
+                          return;
+                        }
+                        inputRef.current?.click();
+                      }}
+                      className="w-full md:w-auto bg-[var(--color-accent-signal)] text-[var(--color-bg-base)] px-8 py-5 font-mono text-sm tracking-widest uppercase font-semibold hover:bg-[var(--color-ink-primary)] transition-colors"
                     >
                       {t("upload.select")}
                     </button>
@@ -235,10 +305,17 @@ export default function HomePage() {
                   }}
                 />
               </div>
+              )}
 
               {error && (
-                <div className="mt-4 border border-[var(--color-risk-critical)] px-4 py-3 font-mono text-xs text-[var(--color-risk-critical)]">
-                  ОШИБКА // {error}
+                <div
+                  role="alert"
+                  className="mt-4 border border-[var(--color-risk-critical)] px-4 py-3 font-body text-sm text-[var(--color-risk-critical)]"
+                >
+                  <span className="font-mono text-[10px] tracking-widest uppercase">
+                    {t("err.label")} //{" "}
+                  </span>
+                  {error}
                 </div>
               )}
 

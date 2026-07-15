@@ -1,6 +1,6 @@
 "use client";
 
-import type { RiskClause } from "@/lib/api";
+import { isAbstained, type RiskClause } from "@/lib/api";
 import { useLocale } from "./locale-provider";
 
 export function ClauseCard({
@@ -20,8 +20,11 @@ export function ClauseCard({
     4: { label: t("scale.critical"), color: "var(--color-risk-critical)", bar: "w-4/5" },
     5: { label: t("scale.dealBreaker"), color: "var(--color-risk-deal-breaker)", bar: "w-full" },
   };
-  const meta = SEVERITY_META[clause.severity];
-  const isCritical = clause.severity >= 4;
+  // Abstained clause: severity is null. Never fall back to a colour — showing a verdict
+  // the model explicitly declined to give is exactly the dishonesty this layer removes.
+  const abstained = isAbstained(clause);
+  const meta = abstained ? null : SEVERITY_META[clause.severity as number];
+  const isCritical = !abstained && (clause.severity as number) >= 4;
   const LEGALITY_META: Record<string, { label: string; color: string; emoji: string }> = {
     void: { label: t("legality.void"), color: "var(--color-risk-deal-breaker)", emoji: "🔴" },
     disputable: { label: t("legality.disputable"), color: "var(--color-risk-warning)", emoji: "🟠" },
@@ -34,7 +37,7 @@ export function ClauseCard({
       className={`border border-[var(--color-divider)] bg-[var(--color-bg-surface)] p-6 ${
         isCritical ? "pulse-critical" : ""
       } ${onJumpToPage ? "cursor-pointer hover:border-[var(--color-accent-signal)]" : ""}`}
-      style={isCritical ? { borderColor: meta.color } : undefined}
+      style={isCritical && meta ? { borderColor: meta.color } : undefined}
       onClick={() => onJumpToPage?.(clause.page_number)}
     >
       {/* Header */}
@@ -52,18 +55,29 @@ export function ClauseCard({
         </div>
       </div>
 
-      {/* Severity bar */}
-      <div className="mb-6">
-        <div className="h-1.5 bg-[var(--color-bg-elevated)] mb-1 overflow-hidden">
-          <div className={`h-full ${meta.bar}`} style={{ background: meta.color }} />
+      {/* Severity bar — or an explicit abstention notice when the model declined */}
+      {meta ? (
+        <div className="mb-6">
+          <div className="h-1.5 bg-[var(--color-bg-elevated)] mb-1 overflow-hidden">
+            <div className={`h-full ${meta.bar}`} style={{ background: meta.color }} />
+          </div>
+          <div
+            className="font-mono text-[10px] tracking-widest font-semibold"
+            style={{ color: meta.color }}
+          >
+            {meta.label}
+          </div>
         </div>
-        <div
-          className="font-mono text-[10px] tracking-widest font-semibold"
-          style={{ color: meta.color }}
-        >
-          {meta.label}
+      ) : (
+        <div className="mb-6 border border-dashed border-[var(--color-accent-electric)] p-3">
+          <div className="font-mono text-[10px] tracking-widest font-semibold text-[var(--color-accent-electric)] mb-1">
+            {t("abstain.label")}
+          </div>
+          <p className="font-body text-sm text-[var(--color-ink-secondary)] leading-relaxed">
+            {t("abstain.body")}
+          </p>
         </div>
-      </div>
+      )}
 
       {/* Legality classification (tenant profile only) */}
       {legality && (

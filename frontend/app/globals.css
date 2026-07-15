@@ -1,5 +1,26 @@
 @import "tailwindcss";
 
+/* PT Sans (ParaType, SIL OFL 1.1 — see public/fonts/OFL.txt). Vendored locally: the
+   CSP is self-only, so no CDN. This is the only font in the stack with real Cyrillic
+   coverage — Fraunces/Newsreader are Latin-only, so every Cyrillic glyph falls through
+   to it. The PDF export rasterizes the DOM (html2canvas), so a Cyrillic-capable font
+   must be loaded in the document or the report renders tofu. */
+@font-face {
+  font-family: "PT Sans";
+  src: url("/fonts/PT_Sans-Web-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PT Sans";
+  src: url("/fonts/PT_Sans-Web-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --color-bg-base: #0A0C10;
   --color-bg-surface: #13161C;
@@ -16,9 +37,11 @@
   --color-divider: rgba(244, 241, 234, 0.12);
   --color-grid: rgba(244, 241, 234, 0.06);
 
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
-  --font-body: "Newsreader", ui-serif, Georgia, serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* "PT Sans" sits after the Latin display faces: Latin keeps Fraunces/Newsreader,
+     Cyrillic (absent from both) resolves to PT Sans instead of a system fallback. */
+  --font-display: "Fraunces", "PT Sans", ui-serif, Georgia, serif;
+  --font-body: "Newsreader", "PT Sans", ui-serif, Georgia, serif;
+  --font-mono: "JetBrains Mono", "PT Sans", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 :root {
