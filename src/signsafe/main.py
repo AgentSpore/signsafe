@@ -1,20 +1,16 @@
-"""SignSafe FastAPI app factory — stateless analysis + zero-knowledge sync."""
+"""SignSafe FastAPI app factory — stateless analysis, no persistence of any kind."""
 
 from __future__ import annotations
-
-from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from loguru import logger
 from slowapi.errors import RateLimitExceeded
 from starlette.formparsers import MultiPartParser
 
-from signsafe.api import documents, health, negotiation, sync
+from signsafe.api import documents, health, negotiation
 from signsafe.core.body_limit import BodySizeLimitMiddleware
 from signsafe.core.config import settings
-from signsafe.core.database import close_db, init_db
 from signsafe.core.rate_limit import limiter
 
 # Keep uploads in memory instead of letting starlette spool them to a temp file on disk.
@@ -27,19 +23,16 @@ from signsafe.core.rate_limit import limiter
 MultiPartParser.spool_max_size = settings.max_upload_bytes
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await init_db()
-    logger.info("SignSafe started (stateless analysis + zero-knowledge sync)")
-    yield
-    await close_db()
-
-
+# There is deliberately NO lifespan/database. The sync feature was the only thing that
+# ever persisted anything (magic_tokens + sync_blobs were the only tables), and it was
+# removed: its "encryption" derived the key from the user's email, which the server stored
+# in the same row as the ciphertext, so it was not zero-knowledge and the erasure right
+# had no implementation. With it gone there is no datastore at all — "мы ничего не храним"
+# is now a property of the architecture, not a promise. See services/outbound.py.
 app = FastAPI(
     title="SignSafe",
     description="Экспериментальный разбор договора найма (бета) — stateless, без хранения",
-    version="0.4.0",
-    lifespan=lifespan,
+    version="0.5.0",
 )
 
 app.state.limiter = limiter
@@ -74,8 +67,11 @@ app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_upload_bytes)
 app.include_router(health.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
 app.include_router(negotiation.router, prefix="/api")
-app.include_router(sync.router, prefix="/api")
-# NOTE: there is deliberately no /api/translate router. The translation capability was
-# removed in the RU-first beta: it was a public endpoint that forwarded arbitrary caller
-# strings to Google Translate, which made "OpenRouter is the only third party that
-# receives anything from your document" false. See services/outbound.py.
+# NOTE: two routers are deliberately absent, both removed rather than gated:
+#   /api/translate — a public endpoint that forwarded arbitrary caller strings to Google
+#     Translate, which made "OpenRouter is the only third party that receives anything
+#     from your document" false.
+#   /api/sync/*    — stored an email + magic-link tokens + "encrypted" analyses whose key
+#     was derived from that same stored email, so it was not zero-knowledge, and it had no
+#     deletion path for the 152-ФЗ erasure right.
+# See services/outbound.py before reintroducing either.

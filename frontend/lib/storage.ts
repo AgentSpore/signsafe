@@ -56,14 +56,10 @@ function randomId(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 }
 
-/** Auto-push to cloud if session is linked (best-effort). */
-async function tryCloudPush(): Promise<void> {
-  try {
-    const mod = await import("./sync");
-    const session = mod.getSession();
-    if (session) await mod.pushSync().catch(() => {});
-  } catch {}
-}
+// There is deliberately no cloud push. Cross-device sync was removed: it required an
+// email (breaking the no-account promise), its "encryption" used a key derived from that
+// same server-stored email, and it had no deletion path. localStorage below is now the
+// ONLY place a result is ever stored — see src/signsafe/services/outbound.py.
 
 export function saveAnalysis(data: AnalysisData): string {
   if (typeof window === "undefined") return "";
@@ -91,7 +87,6 @@ export function saveAnalysis(data: AnalysisData): string {
   } catch (e) {
     console.error("storage failed", e);
   }
-  tryCloudPush();
   return id;
 }
 

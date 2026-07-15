@@ -14,19 +14,16 @@ import { CONSENT_VERSION } from "@/lib/api";
 export default function PrivacyPage() {
   const { t } = useLocale();
 
-  // §5 (what we store) and §9 (optional sync) each carry a caveat — the part of the truth
-  // a reader would otherwise have to infer. Per-section so a future one can add its own
-  // without a second rendering path.
+  // §5 (what we store) carries the only caveat left — the >10MB upload can touch disk
+  // before the size check rejects it, which a reader would otherwise have to infer.
+  // Per-section so a future one can add its own without a second rendering path.
   //
-  // §4 no longer has one: it used to explain what the translation service received, and
-  // the translate path has been removed entirely, so there is nothing left to caveat.
-  // OpenRouter is now the only third party, which §4 states plainly.
-  //
-  // §9's caveat is the important one: the sync encryption key is derived from the user's
-  // email, which we store next to the ciphertext, so we can technically decrypt it. That
-  // is stated rather than dressed up as "zero-knowledge".
-  const CAVEATS: Record<number, boolean> = { 5: true, 9: true };
-  const sections = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => ({
+  // Two caveats were deleted along with the features they described, rather than reworded:
+  // §4's (what the translation service received — the translate path is gone) and §9's
+  // (cross-device sync, whose key was derived from the email we stored beside the
+  // ciphertext). No feature, no section, no caveat.
+  const CAVEATS: Record<number, boolean> = { 5: true };
+  const sections = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({
     title: t(`privacy.s${n}.title`),
     body: t(`privacy.s${n}.body`),
     caveatTitle: CAVEATS[n] ? t(`privacy.s${n}.caveat.title`) : null,

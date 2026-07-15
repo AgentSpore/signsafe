@@ -22,31 +22,29 @@ OpenRouter is the ONLY destination that receives anything derived from the docum
 There is no other third-party host in the tree. The privacy copy says exactly this, so
 adding one REQUIRES updating this inventory and the user-facing copy together.
 
-Destinations that do NOT receive user document content (verified, keep it that way):
+Everything else (verified, keep it that way):
 
-3. SMTP (magic-link auth) — services/email_service.py. Carries the recipient address and
-   a login token only. No document content.
-
-4. Sync API — services/sync_service.py. OUR OWN database, not a third party, and
-   zero-knowledge: stores ciphertext + IV, never plaintext.
-
-5. Logs (loguru) — audited: log statements carry counts, model names, exception TYPES
+3. Logs (loguru) — audited: log statements carry counts, model names, exception TYPES
    and redaction category labels only. Never document text. Keep it that way: log
    `type(exc).__name__`, never an exception that may embed the payload.
 
-6. No telemetry / Sentry / analytics SDK exists in this codebase. Adding one would be a
+4. No telemetry / Sentry / analytics SDK exists in this codebase. Adding one would be a
    new egress and must be registered here.
 
-7. Google Fonts (frontend/app/layout.tsx) — a BROWSER-side request to fonts.googleapis.com
+5. Google Fonts (frontend/app/layout.tsx) — a BROWSER-side request to fonts.googleapis.com
    for the stylesheet/webfonts. It carries NO document content and does not touch our
    server; what Google sees is the visitor's IP and user-agent, as with any CDN asset.
-   Listed here for completeness so the inventory is not quietly incomplete: the privacy
-   copy's claim is specifically that OpenRouter is the only third party receiving anything
-   FROM THE DOCUMENT, which remains true. Self-hosting the fonts (the files already exist
-   under frontend/public/fonts for the PDF export) would remove even this — not done in
-   this round.
+   Listed so the inventory is not quietly incomplete: the privacy copy's claim is
+   specifically that OpenRouter is the only third party receiving anything FROM THE
+   DOCUMENT, which remains true. Self-hosting the fonts (the files already exist under
+   frontend/public/fonts for the PDF export) would remove even this — not done yet.
+
+6. PERSISTENCE: none. There is no database. The sync feature (below) owned the only
+   tables, so removing it removed the datastore entirely. A result lives ONLY in the
+   visitor's localStorage. If you add a table, you invalidate §5 of the privacy copy.
 
 REMOVED (do not reintroduce without a privacy-copy change):
+
    Google Translate. `/api/translate` was a PUBLIC endpoint forwarding arbitrary caller
    strings to translate.googleapis.com. Deleting the frontend caller did not close it —
    any client could still POST raw contract text to our own endpoint and reach Google.
@@ -54,6 +52,16 @@ REMOVED (do not reintroduce without a privacy-copy change):
    deleted for the RU-first beta rather than gated, because caller discipline is not a
    gate. If locales ever come back: translate a SERVER-OWNED FIXED DICTIONARY of our own
    UI strings — never caller-supplied text — and update the privacy copy first.
+
+   Cross-device sync + SMTP. `/api/sync/*` stored an email, magic-link tokens, and
+   "encrypted" analyses; SMTP existed only to deliver those magic links. It was removed,
+   not fixed, because: (a) it was NOT zero-knowledge — the AES key was derived (PBKDF2,
+   no passphrase) from the user's email, which the server stored in the same row as the
+   ciphertext, so anyone with the DB had both the ciphertext and its key input; (b) there
+   was no delete endpoint, leaving the 152-ФЗ erasure right unimplementable; (c) it
+   required an email, contradicting the product's own no-account promise. Reintroducing it
+   needs a REAL user passphrase that never reaches the server, a deletion path, and a
+   privacy-copy change — in that order. Guarded by tests/test_sync_removed.py.
 ==================================================================================
 
 WHAT THE GUARD TESTS DO AND DO NOT GUARANTEE — read before trusting them.

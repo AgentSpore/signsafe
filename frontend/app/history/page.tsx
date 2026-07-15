@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { deleteAnalysis, clearAllHistory, loadHistory, type HistoryEntry } from "@/lib/storage";
-import { SyncPanel } from "@/components/sync-panel";
 import { SiteFooter } from "@/components/site-footer";
 import { useLocale } from "@/components/locale-provider";
 
@@ -60,7 +59,6 @@ export default function HistoryPage() {
 
       <div className="relative max-w-[1400px] mx-auto px-8 py-16">
         <div className="mb-10 max-w-lg">
-          <SyncPanel onSynced={refresh} />
         </div>
         <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-ink-tertiary)] mb-4">
           {t("history.section")}
