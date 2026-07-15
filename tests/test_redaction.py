@@ -3,6 +3,8 @@ while the clause structure the analysis relies on stays intact."""
 
 from __future__ import annotations
 
+import pytest
+
 from signsafe.services.redaction import PLACEHOLDER, redact
 
 _LEASE = """ДОГОВОР НАЙМА ЖИЛОГО ПОМЕЩЕНИЯ
@@ -72,6 +74,47 @@ def test_clause_structure_survives_redaction() -> None:
         "жилое помещение во временное владение",
     ):
         assert marker in out.text, f"redaction destroyed clause signal: {marker}"
+
+
+# --- False positives: clause text that merely LOOKS like a labeled field ------
+# Regression guards. Each of these was (or would be) eaten by a label+rest-of-line rule,
+# silently deleting the clause the analysis depends on.
+
+@pytest.mark.parametrize("sentence", [
+    # Party word opening an ordinary clause sentence.
+    "Наймодатель передаёт Нанимателю жилое помещение во временное владение.",
+    # Party word WITH a colon, but the value is a verb phrase, not a name.
+    "Наниматель: обязуется вносить плату не позднее 5 числа каждого месяца.",
+    "Наймодатель: обязуется передать помещение в пригодном для проживания состоянии.",
+    # Bare "по адресу" — ordinary clause language, no address value.
+    "Уведомление направляется по адресу Наймодателя, указанному в договоре.",
+    "Стороны согласовали, что адрес для уведомлений может быть изменён.",
+    # "в лице" followed by a role, not a name.
+    "Организация в лице генерального директора действует на основании устава.",
+])
+def test_clause_sentences_are_not_mistaken_for_pii_fields(sentence: str) -> None:
+    out = redact(sentence)
+    assert out.text == sentence, f"redaction destroyed clause text: {out.text}"
+    assert out.categories == []
+
+
+def test_labeled_name_field_is_still_redacted_after_the_fix() -> None:
+    # The fix must not silently disable real redaction.
+    out = redact("Наймодатель: Иванов Иван Иванович")
+    assert "Иванов Иван Иванович" not in out.text
+    assert "ФИО" in out.categories
+
+
+def test_labeled_address_field_is_still_redacted_after_the_fix() -> None:
+    out = redact("Адрес: г. Москва, ул. Ленина, д. 5, кв. 12")
+    assert "Ленина" not in out.text
+    assert "Адрес" in out.categories
+
+
+def test_in_person_name_is_still_redacted() -> None:
+    out = redact("Договор подписан в лице Иванова И. И. по доверенности")
+    assert "Иванова И. И." not in out.text
+    assert "по доверенности" in out.text
 
 
 def test_clean_text_reports_no_categories_and_is_unchanged() -> None:

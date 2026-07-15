@@ -64,7 +64,8 @@ def test_preset_registered_and_selectable() -> None:
 
 def test_preset_focus_is_tenant_lens() -> None:
     focus = get_focus("residential_lease")
-    assert "АРЕНДАТОРА" in focus
+    # RU v1: наём terminology — «наниматель», not «арендатор» (see tenant_legality).
+    assert "НАНИМАТЕЛЯ" in focus
     # Distinct from the generic fallback preset.
     assert focus != get_focus("other")
     assert focus != get_focus(None)
@@ -126,6 +127,15 @@ def test_rent_increase_gloss_states_contractual_carve_out() -> None:
 def test_early_termination_gloss_states_three_month_notice() -> None:
     gloss = TENANT_LEGALITY_RULES["early_termination"].gloss_ru.lower()
     assert "три месяца" in gloss
+
+
+def test_residential_prompt_uses_naem_terminology_like_the_rules() -> None:
+    # The prompt must not drift from tenant_legality/demo (which say наниматель).
+    focus = INDUSTRY_FOCUS["residential_lease"]
+    assert "наниматель" in focus.lower()
+    assert "наймодател" in focus.lower()
+    assert "АРЕНДАТОРА" not in focus
+    assert "арендодателя" not in focus.lower()
 
 
 def test_glosses_use_naem_terminology() -> None:

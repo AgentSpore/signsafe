@@ -22,6 +22,13 @@ class Settings(BaseModel):
     # Resource controls (152-ФЗ hardening + zip/decompression-bomb guard)
     max_pdf_pages: int = 40
     ocr_timeout_seconds: int = 60
+    # TOTAL wall-clock budget for extraction+OCR of one document. The per-page OCR
+    # timeout alone is not a bound: 40 pages x 60s would occupy a worker for ~40 min.
+    max_extraction_seconds: int = 120
+
+    # In-app rate limit for the unauthenticated, expensive POST /api/analyze (LLM
+    # cascade + OCR). Do not rely on an unverified edge proxy.
+    rate_limit_analyze: str = "10/minute"
 
     # Versioned consent required by /api/analyze (152-ФЗ). Requests must carry one of
     # these; consent is validated but NOT stored (the service stays stateless).
@@ -44,6 +51,10 @@ class Settings(BaseModel):
     public_app_url: str = "https://signsafe.agentspore.com"
 
     @property
+    def max_upload_bytes(self) -> int:
+        return self.max_upload_mb * 1024 * 1024
+
+    @property
     def has_api_key(self) -> bool:
         return bool(self.openrouter_api_key)
 
@@ -63,6 +74,7 @@ _origins = _env_origins()
 
 settings = Settings(
     openrouter_api_key=os.getenv("OPENROUTER_API_KEY", ""),
+    rate_limit_analyze=os.getenv("RATE_LIMIT_ANALYZE", "10/minute"),
     **({"allowed_origins": _origins} if _origins else {}),
     smtp_host=os.getenv("SMTP_HOST", ""),
     smtp_port=int(os.getenv("SMTP_PORT", "587")),

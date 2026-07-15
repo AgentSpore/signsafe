@@ -43,20 +43,42 @@ _PASSPORT = re.compile(
 _ACCOUNT_LABELED = re.compile(
     r"((?:р/?с|расч[её]тн\w* сч\w*|л/с|счёт|счет)[^\d]{0,15})\d{11,20}", re.IGNORECASE
 )
-# Labeled name / address fields — mask value to end of line.
-# A separator (":" / "-") is REQUIRED: party words like "Наймодатель" also open ordinary
-# clause sentences ("Наймодатель передаёт Нанимателю жилое помещение..."), and matching
-# those on a bare space would redact the clause text the analysis depends on.
+# Labeled name / address fields.
+#
+# TWO conditions are required, because a party word is BOTH a form label and an ordinary
+# sentence subject:
+#   "Наймодатель: Иванов Иван Иванович"   → a name field, redact the value
+#   "Наймодатель передаёт Нанимателю ..."  → a clause, must survive untouched
+#   "Наниматель: обязуется вносить плату"  → a CLAUSE with a colon, must survive
+# So we require (a) a real separator AND (b) a NAME-SHAPED value. Matching a label plus
+# "rest of line" destroys the clause text the analysis depends on.
+# NOTE: the name-shape is CASE-SENSITIVE on purpose and these patterns must NOT carry a
+# global re.IGNORECASE — under IGNORECASE, [А-ЯЁ] also matches lowercase, so a verb
+# phrase ("обязуется вносить плату") parses as a name and the clause gets redacted.
+# The label alone is case-insensitive via the scoped (?i:...) group.
+_NAME_VALUE = (
+    r"(?:[А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+){1,2}"          # Иванов Иван Иванович
+    r"|[А-ЯЁ][а-яё]+\s+[А-ЯЁ]\.\s*[А-ЯЁ]\.?"               # Иванов И. И.
+    r"|[А-ЯЁ]\.\s*[А-ЯЁ]\.\s*[А-ЯЁ][а-яё]+)"               # И. И. Иванов
+)
 _FIO_LABEL = re.compile(
-    r"(ФИО|Ф\.И\.О\.|наниматель|наймодатель|арендатор|арендодатель)"
-    r"(\s*[:\-]\s*)([^\n]{2,80})",
+    r"((?i:ФИО|Ф\.И\.О\.|наниматель|наймодатель|арендатор|арендодатель))"
+    rf"(\s*[:\-]\s*)({_NAME_VALUE})"
+)
+# "в лице <ФИО>" — no separator, but the value must still be name-shaped
+# ("в лице генерального директора ..." must survive).
+_FIO_IN_PERSON = re.compile(rf"((?i:в лице))(\s+)({_NAME_VALUE})")
+# Address: a REQUIRED separator. A bare "по адресу" is ordinary clause language
+# ("уведомление направляется по адресу Наймодателя ...") and must survive.
+_ADDRESS_LABEL = re.compile(
+    r"((?:зарегистрирован\w*\s+по\s+адресу|проживающ\w*\s+по\s+адресу|"
+    r"адрес(?:у)?(?:\s+регистрации|\s+проживания)?)\s*[:\-]\s*)([^\n]{2,120})",
     re.IGNORECASE,
 )
-# "в лице <ФИО>" is unambiguous — no separator needed.
-_FIO_IN_PERSON = re.compile(r"(в лице)(\s+)([^\n,]{2,80})", re.IGNORECASE)
-_ADDRESS_LABEL = re.compile(
-    r"(адрес(?:у)?(?:\s+регистрации|\s+проживания)?|зарегистрирован\w*\s+по\s+адресу|"
-    r"проживающ\w*\s+по\s+адресу)(\s*[:\-]?\s*)([^\n]{2,120})",
+# Address-shaped value without a label/separator ("г. Москва, ул. Ленина, д. 5, кв. 12").
+# Deliberately narrow — requires the "г. <City>, ул." shape — to avoid eating clause text.
+_ADDRESS_SHAPED = re.compile(
+    r"г\.\s*[А-ЯЁ][а-яё-]+,\s*(?:ул|пр-т|просп|пер|б-р|наб)\.[^\n]{0,60}",
     re.IGNORECASE,
 )
 # Signature blocks: dotted/underscored signature lines and М.П.
@@ -125,7 +147,10 @@ def redact(text: str) -> RedactionResult:
     text, hit = _sub_full(_FIO_TRIPLE, text)
     if hit:
         found.add("full_name")
-    text, hit = _sub_labeled(_ADDRESS_LABEL, text, rf"\1\2{PLACEHOLDER}")
+    text, hit = _sub_labeled(_ADDRESS_LABEL, text, rf"\1{PLACEHOLDER}")
+    if hit:
+        found.add("address")
+    text, hit = _sub_full(_ADDRESS_SHAPED, text)
     if hit:
         found.add("address")
     text, hit = _sub_labeled(_SIGNATURE, text, rf"\1{PLACEHOLDER}")

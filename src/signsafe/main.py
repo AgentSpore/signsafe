@@ -4,13 +4,26 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from loguru import logger
+from slowapi.errors import RateLimitExceeded
+from starlette.formparsers import MultiPartParser
 
 from signsafe.api import documents, health, negotiation, sync, translate
 from signsafe.core.config import settings
 from signsafe.core.database import close_db, init_db
+from signsafe.core.rate_limit import limiter
+
+# Keep uploads in memory instead of letting starlette spool them to a temp file on disk.
+#
+# VERIFIED (starlette 1.0.0): MultiPartParser.spool_max_size defaults to 1 MiB; above it
+# SpooledTemporaryFile.rollover() writes the upload to a real (anonymous) temp file. Since
+# the handler reads the whole PDF into memory anyway and rejects anything over
+# max_upload_mb, spooling to disk buys nothing — raising the threshold to the upload limit
+# makes "the PDF is never written to disk" actually TRUE for every accepted upload.
+MultiPartParser.spool_max_size = settings.max_upload_bytes
 
 
 @asynccontextmanager
@@ -23,10 +36,26 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="SignSafe",
-    description="Stateless AI lease forensics for first-time commercial tenants",
-    version="0.3.0",
+    description="Экспериментальный разбор договора найма (бета) — stateless, без хранения",
+    version="0.4.0",
     lifespan=lifespan,
 )
+
+app.state.limiter = limiter
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    return JSONResponse(
+        status_code=429,
+        content={
+            "detail": {
+                "code": "rate_limited",
+                "message": "Слишком много запросов. Подождите минуту и попробуйте снова.",
+            }
+        },
+    )
+
 
 app.add_middleware(
     CORSMiddleware,

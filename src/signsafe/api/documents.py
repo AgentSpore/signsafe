@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from loguru import logger
 from sse_starlette.sse import EventSourceResponse
 
 from signsafe.core.config import settings
 from signsafe.core.deps import get_analysis_service, get_pdf_service
+from signsafe.core.rate_limit import limiter
 from signsafe.schemas.document import AnalysisResult
 from signsafe.services.analysis_service import AnalysisService
 from signsafe.services.pdf_service import PDFService
@@ -18,7 +20,9 @@ router = APIRouter(tags=["analyze"])
 
 
 @router.post("/analyze")
+@limiter.limit(settings.rate_limit_analyze)
 async def analyze(
+    request: Request,
     file: UploadFile = File(...),
     industry: str | None = Form(default=None),
     consent_version: str | None = Form(default=None),
@@ -67,6 +71,12 @@ async def analyze(
             status_code=400,
             detail={"code": "read_failed", "message": "Не удалось прочитать файл."},
         ) from exc
+    finally:
+        # Release the upload buffer immediately after read. Uploads are held in memory
+        # (main.py raises spool_max_size above max_upload_bytes), but an oversized upload
+        # rejected below may still have spooled to a temp file — close() drops it now
+        # rather than at GC time.
+        await file.close()
 
     if len(pdf_bytes) > max_bytes:
         raise HTTPException(
@@ -82,7 +92,9 @@ async def analyze(
     async def event_generator():
         try:
             yield json.dumps({"stage": "extracting", "progress": 10, "message": "Reading PDF pages..."})
-            extracted = pdf_service.extract(pdf_bytes)
+            # Extraction + OCR are blocking CPU/subprocess work — never run them on the
+            # event loop, or one slow scan stalls every other request on this worker.
+            extracted = await asyncio.to_thread(pdf_service.extract, pdf_bytes)
 
             ocr_suffix = " (OCR used)" if extracted.used_ocr else ""
             yield json.dumps({

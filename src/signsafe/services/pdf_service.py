@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import time
 from dataclasses import dataclass
 
 import pymupdf
@@ -57,6 +58,9 @@ class PDFService:
     """Extract text from PDF leases with OCR fallback for scanned documents."""
 
     def extract(self, pdf_bytes: bytes) -> ExtractedDocument:
+        # Total wall-clock budget for this document (per-page OCR timeouts alone are not
+        # a bound: max_pdf_pages x ocr_timeout_seconds would pin a worker for ~40 min).
+        deadline = time.monotonic() + settings.max_extraction_seconds
         try:
             doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
         except Exception as exc:
@@ -92,7 +96,11 @@ class PDFService:
                     "Похоже, это скан без текстового слоя, а модуль распознавания "
                     "(OCR) недоступен. Загрузите PDF с текстовым слоем."
                 )
-            pages = self._ocr_pages(doc)
+            try:
+                pages = self._ocr_pages(doc, deadline)
+            except ValueError:
+                doc.close()
+                raise
             used_ocr = True
             ocr_chars = sum(len(p.text) for p in pages)
             ocr_quality_low = ocr_chars < MIN_OCR_CHARS_PER_PAGE * len(pages)
@@ -112,25 +120,38 @@ class PDFService:
             ocr_quality_low=ocr_quality_low,
         )
 
-    def _ocr_pages(self, doc: "pymupdf.Document") -> list[PageText]:
+    def _ocr_pages(self, doc: "pymupdf.Document", deadline: float) -> list[PageText]:
         results: list[PageText] = []
         zoom = OCR_DPI / 72.0
         matrix = pymupdf.Matrix(zoom, zoom)
         for idx, page in enumerate(doc, start=1):
-            pix = page.get_pixmap(matrix=matrix, alpha=False)
-            # Decompression-bomb guard: skip a page that renders to an enormous bitmap.
-            if pix.width * pix.height > MAX_OCR_PIXELS:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise ValueError(
+                    "Обработка документа заняла слишком много времени. "
+                    "Загрузите документ меньшего объёма или с текстовым слоем."
+                )
+            # Decompression-bomb guard: estimate the rendered size from the page geometry
+            # BEFORE get_pixmap allocates the bitmap — checking afterwards does not
+            # prevent the allocation it is supposed to guard against.
+            rect = page.rect
+            est_pixels = (rect.width * zoom) * (rect.height * zoom)
+            if est_pixels > MAX_OCR_PIXELS:
                 logger.warning(
-                    "Page {} renders to {}x{} px — exceeds OCR pixel cap, skipping",
-                    idx, pix.width, pix.height,
+                    "Page {} would render to ~{:.0f} px — exceeds OCR pixel cap, skipping",
+                    idx, est_pixels,
                 )
                 results.append(PageText(page_number=idx, text=""))
                 continue
+            pix = page.get_pixmap(matrix=matrix, alpha=False)
             img_bytes = pix.tobytes("png")
             image = Image.open(io.BytesIO(img_bytes))
             try:
+                # Never let one page outlive the whole-document budget.
                 text = pytesseract.image_to_string(
-                    image, lang=OCR_LANG, timeout=settings.ocr_timeout_seconds
+                    image,
+                    lang=OCR_LANG,
+                    timeout=max(1, int(min(settings.ocr_timeout_seconds, remaining))),
                 ).strip()
             except Exception as exc:
                 logger.error("OCR failed on page {}: {}", idx, type(exc).__name__)
