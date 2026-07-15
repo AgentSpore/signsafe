@@ -5,7 +5,6 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AnalyzeError,
-  CONSENT_VERSION,
   streamAnalysis,
   type AnalysisData,
   type BlockedResult,
@@ -48,7 +47,7 @@ export default function LeasePage() {
     setProgress(5);
     try {
       const pdfBuf = await file.arrayBuffer();
-      for await (const ev of streamAnalysis(file, industry, CONSENT_VERSION)) {
+      for await (const ev of streamAnalysis(file, industry, consented)) {
         setStage(ev.stage);
         setProgress(ev.progress);
         if (ev.stage === "done" && ev.data) {

@@ -181,15 +181,21 @@ export function deriveSeveritySummary(clauses: RiskClause[]): SeveritySummary {
 
 export async function* streamAnalysis(
   file: File,
-  industry?: string | null,
-  // Required, not defaulted: the 152-ФЗ consent gate is enforced by the backend, and a
-  // default here would let a caller skip the checkbox and still analyze.
-  consentVersion: string = CONSENT_VERSION,
+  industry: string | null | undefined,
+  // The caller passes the user's actual consent state, not a version string. Even a
+  // required `consentVersion: string` would let a future caller hand over CONSENT_VERSION
+  // without ever showing the checkbox; a boolean makes the parameter mean what the gate
+  // is about, and keeps the version an internal detail of this module.
+  consented: boolean,
 ): AsyncGenerator<StreamEvent> {
+  // 152-ФЗ gate, client side. The backend enforces `consent_version` independently, so
+  // this is defence in depth: it keeps an un-gated caller from ever reaching the network.
+  if (!consented) throw new AnalyzeError("consent_required");
+
   const form = new FormData();
   form.append("file", file);
   if (industry) form.append("industry", industry);
-  form.append("consent_version", consentVersion);
+  form.append("consent_version", CONSENT_VERSION);
 
   const res = await fetch("/api/analyze", { method: "POST", body: form });
   if (!res.ok || !res.body) throw await describeHttpError(res);

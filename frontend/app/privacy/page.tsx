@@ -15,9 +15,14 @@ import { CONSENT_VERSION } from "@/lib/api";
 export default function PrivacyPage() {
   const { t } = useLocale();
 
+  // Only §5 (what we store) carries a caveat today; the shape is per-section so a future
+  // one can add its own without a second rendering path.
+  const CAVEATS: Record<number, boolean> = { 5: true };
   const sections = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({
     title: t(`privacy.s${n}.title`),
     body: t(`privacy.s${n}.body`),
+    caveatTitle: CAVEATS[n] ? t(`privacy.s${n}.caveat.title`) : null,
+    caveat: CAVEATS[n] ? t(`privacy.s${n}.caveat`) : null,
   }));
 
   return (
@@ -56,6 +61,20 @@ export default function PrivacyPage() {
               <p className="font-body text-base leading-relaxed text-[var(--color-ink-secondary)] max-w-3xl">
                 {s.body}
               </p>
+
+              {/* The in-memory claim holds for accepted uploads only. An oversized file is
+                  spooled before the size check can reject it, so §5 carries the caveat
+                  rather than leaving the blanket claim to imply more than is true. */}
+              {s.caveat && (
+                <div className="mt-5 border-l-2 border-[var(--color-accent-electric)] pl-4 max-w-3xl">
+                  <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-[var(--color-accent-electric)] mb-2">
+                    {s.caveatTitle}
+                  </div>
+                  <p className="font-body text-sm leading-relaxed text-[var(--color-ink-tertiary)]">
+                    {s.caveat}
+                  </p>
+                </div>
+              )}
             </section>
           ))}
         </div>
